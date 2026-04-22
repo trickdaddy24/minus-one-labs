@@ -1,0 +1,71 @@
+import type { APIRoute } from 'astro';
+
+export const POST: APIRoute = async ({ request }) => {
+  const data = await request.formData();
+
+  const name    = data.get('name')?.toString().trim() ?? '';
+  const email   = data.get('email')?.toString().trim() ?? '';
+  const company = data.get('company')?.toString().trim() ?? '';
+  const message = data.get('message')?.toString().trim() ?? '';
+  const needs   = data.getAll('needs').join(', ');
+
+  if (!name || !email || !message) {
+    return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const text = [
+    '🧪 New Minus One Labs Inquiry',
+    `Name: ${name}`,
+    `Email: ${email}`,
+    company ? `Company: ${company}` : null,
+    needs ? `Needs: ${needs}` : null,
+    `Message: ${message}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const pushoverToken = import.meta.env.PUSHOVER_TOKEN;
+  const pushoverUser  = import.meta.env.PUSHOVER_USER;
+  const telegramToken = import.meta.env.TELEGRAM_TOKEN;
+  const telegramChatId = import.meta.env.TELEGRAM_CHAT_ID;
+
+  const sends: Promise<Response>[] = [];
+
+  if (pushoverToken && pushoverUser) {
+    const form = new FormData();
+    form.append('token', pushoverToken);
+    form.append('user', pushoverUser);
+    form.append('title', 'New Lead — Minus One Labs');
+    form.append('message', text);
+    sends.push(
+      fetch('https://api.pushover.net/1/messages.json', { method: 'POST', body: form })
+    );
+  }
+
+  if (telegramToken && telegramChatId) {
+    sends.push(
+      fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: telegramChatId, text }),
+      })
+    );
+  }
+
+  try {
+    await Promise.all(sends);
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err) {
+    console.error('Notification error:', err);
+    return new Response(JSON.stringify({ error: 'Failed to send notification' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};

@@ -1,0 +1,19 @@
+---
+const steps = [
+  '1. Discovery call',
+  '2. Custom design & build',
+  '3. Reviews + SEO integration',
+  '4. Launch & ranking optimization',
+];
+---
+
+<section id="how" class="py-24 bg-[#0f2b4f]">
+  <div class="max-w-7xl mx-auto px-6 text-center">
+    <h2 class="text-5xl font-heading font-semibold mb-16">From brief to live in 14 days</h2>
+    <div class="grid md:grid-cols-4 gap-8 text-lg">
+      {steps.map((step) => (
+        <div class="bg-[#1a3a66] p-8 rounded-3xl">{step}</div>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,41 @@
+---
+const services = [
+  {
+    icon: '🎨',
+    title: 'Modern Website Design',
+    description:
+      'Lightning-fast, mobile-first sites with custom design, smooth animations, and professional polish that builds instant trust.',
+  },
+  {
+    icon: '⭐',
+    title: 'Customer Ratings & Reviews',
+    description:
+      'Live Google review widgets, star ratings, testimonial carousels, and automated review requests — all built in.',
+  },
+  {
+    icon: '🔍',
+    title: 'SEO That Actually Works',
+    description:
+      'Technical SEO, schema markup, fast loading, and local optimization so you rank higher on Google from launch day.',
+  },
+];
+---
+
+<section id="services" class="py-24 bg-[#0f2b4f]">
+  <div class="max-w-7xl mx-auto px-6">
+    <h2 class="text-5xl font-heading font-semibold text-center mb-16">
+      What We Build at Minus One Labs
+    </h2>
+    <div class="grid md:grid-cols-3 gap-8">
+      {
+        services.map((s) => (
+          <div class="bg-[#1a3a66] p-8 rounded-3xl hover:ring-2 hover:ring-[#635bff]/50 transition">
+            <div class="text-6xl mb-6">{s.icon}</div>
+            <h3 class="text-2xl font-semibold mb-3">{s.title}</h3>
+            <p class="text-zinc-300">{s.description}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

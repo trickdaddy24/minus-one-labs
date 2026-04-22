@@ -1,0 +1,26 @@
+---
+const projects = [
+  { icon: '🏠', label: 'Roofing Company', result: '+340% organic traffic • 4.9-star reviews live' },
+  { icon: '🍕', label: 'Restaurant Group', result: 'Online ordering + review system • #1 in multiple cities' },
+  { icon: '🦷', label: 'Dental Practice', result: 'Booking system + patient testimonials • 200% more leads' },
+];
+---
+
+<section id="portfolio" class="py-24">
+  <div class="max-w-7xl mx-auto px-6">
+    <h2 class="text-5xl font-heading font-semibold text-center mb-6">Recent Labs Projects</h2>
+    <p class="text-center text-zinc-400 mb-12">Every site ships with reviews and SEO baked in</p>
+    <div class="grid md:grid-cols-3 gap-8">
+      {
+        projects.map((p) => (
+          <div class="group">
+            <div class="aspect-video bg-[#1a3a66] rounded-3xl overflow-hidden mb-4 flex items-center justify-center text-4xl border-2 border-dashed border-[#635bff]/30 group-hover:border-[#635bff] transition">
+              {p.icon} {p.label}
+            </div>
+            <p class="font-medium">{p.result}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
