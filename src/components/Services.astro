@@ -1,38 +1,45 @@
 ---
 const services = [
   {
-    icon: '🎨',
-    title: 'Modern Website Design',
+    icon: '🌐',
+    title: 'One-Page Website',
     description:
-      'Lightning-fast, mobile-first sites with custom design, smooth animations, and professional polish that builds instant trust.',
+      'About, services, contact form, and live visitor comments — professionally designed and live in 14 days.',
   },
   {
     icon: '⭐',
-    title: 'Customer Ratings & Reviews',
+    title: 'Reviews & Ratings',
     description:
-      'Live Google review widgets, star ratings, testimonial carousels, and automated review requests — all built in.',
+      'Google review widget, star rating display, and a live comment system so visitors can vouch for your business.',
   },
   {
     icon: '🔍',
-    title: 'SEO That Actually Works',
+    title: 'SEO Built In',
     description:
-      'Technical SEO, schema markup, fast loading, and local optimization so you rank higher on Google from launch day.',
+      'Schema markup, fast load times, and local search optimization so you rank on Google from launch day.',
+  },
+  {
+    icon: '🔒',
+    title: 'Hosting Included',
+    description:
+      'Deployed on Cloudflare Pages — global CDN, SSL certificate, and blazing fast load times at no extra cost.',
   },
 ];
 ---
 
 <section id="services" class="py-24 bg-[#0f2b4f]">
   <div class="max-w-7xl mx-auto px-6">
-    <h2 class="text-5xl font-heading font-semibold text-center mb-16">
-      What We Build at Minus One Labs
+    <h2 class="text-5xl font-heading font-semibold text-center mb-4">
+      Everything your business needs online
     </h2>
-    <div class="grid md:grid-cols-3 gap-8">
+    <p class="text-center text-zinc-400 mb-16">One flat price. No hidden fees. Launched in 14 days.</p>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
       {
         services.map((s) => (
           <div class="bg-[#1a3a66] p-8 rounded-3xl hover:ring-2 hover:ring-[#635bff]/50 transition">
-            <div class="text-6xl mb-6">{s.icon}</div>
-            <h3 class="text-2xl font-semibold mb-3">{s.title}</h3>
-            <p class="text-zinc-300">{s.description}</p>
+            <div class="text-5xl mb-6">{s.icon}</div>
+            <h3 class="text-xl font-semibold mb-3">{s.title}</h3>
+            <p class="text-zinc-300 text-sm leading-relaxed">{s.description}</p>
           </div>
         ))
       }

@@ -1,0 +1,207 @@
+---
+const testimonials = [
+  {
+    initials: 'MG',
+    color: '#635bff',
+    name: 'Maria G.',
+    business: "Maria's Bakery",
+    stars: 5,
+    quote: 'We went from zero web presence to getting online orders within two weeks. The site looks amazing and customers keep complimenting it.',
+  },
+  {
+    initials: 'JR',
+    color: '#0ea5e9',
+    name: 'James R.',
+    business: 'Riverside Roofing',
+    stars: 5,
+    quote: 'Got a fully working site with a contact form in 12 days. Already landed two new jobs from leads it generated. Best investment we made.',
+  },
+  {
+    initials: 'SP',
+    color: '#10b981',
+    name: 'Sandra P.',
+    business: 'Pearl Dental Studio',
+    stars: 5,
+    quote: 'The Google review widget alone was worth it. New patients tell us they chose us because of our online ratings. Incredible ROI.',
+  },
+  {
+    initials: 'DK',
+    color: '#f59e0b',
+    name: 'Derek K.',
+    business: "Derek's Auto Repair",
+    stars: 5,
+    quote: 'Simple, clean, and fast. My customers can find my hours, call me, and leave reviews all from one page. Exactly what I needed.',
+  },
+  {
+    initials: 'TN',
+    color: '#ec4899',
+    name: 'Tina N.',
+    business: 'Luxe Hair Salon',
+    stars: 5,
+    quote: 'We had our site built in 11 days. The booking form works perfectly and we rank on the first page of Google now for our area.',
+  },
+  {
+    initials: 'ML',
+    color: '#8b5cf6',
+    name: 'Marcus L.',
+    business: 'Iron Mill Gym',
+    stars: 5,
+    quote: 'Professional from start to finish. The site captures leads on autopilot. I get a phone notification every time someone submits the form.',
+  },
+  {
+    initials: 'CR',
+    color: '#ef4444',
+    name: 'Carlos R.',
+    business: 'Ramos Plumbing',
+    stars: 5,
+    quote: 'Never thought my plumbing business needed a website. Now I get 3–4 new calls a week just from people finding me on Google.',
+  },
+  {
+    initials: 'AW',
+    color: '#14b8a6',
+    name: 'Amanda W.',
+    business: 'Willow Home Goods',
+    stars: 5,
+    quote: 'The comment section on our page is a game changer. Customers leave notes about their experience and new shoppers trust us immediately.',
+  },
+];
+
+const row1 = testimonials;
+const row2 = [...testimonials].reverse();
+---
+
+<section id="testimonials" class="py-24 bg-[#0a2540] overflow-hidden">
+  <div class="max-w-7xl mx-auto px-6 mb-12 text-center">
+    <h2 class="text-5xl font-heading font-semibold mb-4">What our clients say</h2>
+    <p class="text-zinc-400">Real businesses. Real results.</p>
+  </div>
+
+  <!-- Row 1: scrolls left -->
+  <div class="relative mb-6">
+    <div class="scroll-track scroll-left">
+      {row1.map((t) => (
+        <div class="card">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="avatar" style={`background:${t.color}`}>{t.initials}</div>
+            <div>
+              <div class="font-semibold text-sm">{t.name}</div>
+              <div class="text-zinc-400 text-xs">{t.business}</div>
+            </div>
+          </div>
+          <div class="stars mb-2">{'⭐'.repeat(t.stars)}</div>
+          <p class="text-zinc-300 text-sm leading-relaxed">{t.quote}</p>
+        </div>
+      ))}
+      {/* Duplicate for seamless loop */}
+      {row1.map((t) => (
+        <div class="card">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="avatar" style={`background:${t.color}`}>{t.initials}</div>
+            <div>
+              <div class="font-semibold text-sm">{t.name}</div>
+              <div class="text-zinc-400 text-xs">{t.business}</div>
+            </div>
+          </div>
+          <div class="stars mb-2">{'⭐'.repeat(t.stars)}</div>
+          <p class="text-zinc-300 text-sm leading-relaxed">{t.quote}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+
+  <!-- Row 2: scrolls right -->
+  <div class="relative">
+    <div class="scroll-track scroll-right">
+      {row2.map((t) => (
+        <div class="card">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="avatar" style={`background:${t.color}`}>{t.initials}</div>
+            <div>
+              <div class="font-semibold text-sm">{t.name}</div>
+              <div class="text-zinc-400 text-xs">{t.business}</div>
+            </div>
+          </div>
+          <div class="stars mb-2">{'⭐'.repeat(t.stars)}</div>
+          <p class="text-zinc-300 text-sm leading-relaxed">{t.quote}</p>
+        </div>
+      ))}
+      {/* Duplicate for seamless loop */}
+      {row2.map((t) => (
+        <div class="card">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="avatar" style={`background:${t.color}`}>{t.initials}</div>
+            <div>
+              <div class="font-semibold text-sm">{t.name}</div>
+              <div class="text-zinc-400 text-xs">{t.business}</div>
+            </div>
+          </div>
+          <div class="stars mb-2">{'⭐'.repeat(t.stars)}</div>
+          <p class="text-zinc-300 text-sm leading-relaxed">{t.quote}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  @keyframes scroll-left {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  @keyframes scroll-right {
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0); }
+  }
+
+  .scroll-track {
+    display: flex;
+    gap: 1.5rem;
+    width: max-content;
+  }
+
+  .scroll-left {
+    animation: scroll-left 40s linear infinite;
+  }
+
+  .scroll-right {
+    animation: scroll-right 40s linear infinite;
+  }
+
+  .scroll-left:hover,
+  .scroll-right:hover {
+    animation-play-state: paused;
+  }
+
+  .card {
+    width: 320px;
+    flex-shrink: 0;
+    background: #1a3a66;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    cursor: default;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover {
+    border-color: rgba(99, 91, 255, 0.4);
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .stars {
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+  }
+</style>
