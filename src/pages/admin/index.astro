@@ -106,6 +106,13 @@ const statusColor: Record<string, string> = {
                       {s.replace('_',' ')}
                     </button>
                   ))}
+                  <button
+                    data-email={q.email}
+                    class="send-link-btn text-xs px-3 py-2 rounded-xl border border-white/20 text-zinc-400 hover:border-[#635bff] hover:text-[#635bff] transition"
+                    title="Send new magic link to client"
+                  >
+                    🔗 Send Login Link
+                  </button>
                 </div>
               </div>
             </div>
@@ -119,6 +126,7 @@ const statusColor: Record<string, string> = {
 <script>
   document.querySelectorAll('[data-id]').forEach(card => {
     const id = card.getAttribute('data-id')!;
+
     card.querySelectorAll<HTMLButtonElement>('.status-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const status = btn.dataset.status!;
@@ -130,16 +138,38 @@ const statusColor: Record<string, string> = {
           body: JSON.stringify({ id, status, admin_note: note }),
         });
 
-        // Update button styles
         card.querySelectorAll<HTMLButtonElement>('.status-btn').forEach(b => {
           b.className = b.className.replace('bg-[#635bff] border-[#635bff] text-white', 'border-white/20 text-zinc-400 hover:border-white/40');
         });
         btn.className = btn.className.replace('border-white/20 text-zinc-400 hover:border-white/40', 'bg-[#635bff] border-[#635bff] text-white');
 
-        // Update badge
         const badge = card.querySelector('.status-badge')!;
         badge.textContent = status.replace('_', ' ');
       });
     });
+
+    const linkBtn = card.querySelector<HTMLButtonElement>('.send-link-btn');
+    if (linkBtn) {
+      linkBtn.addEventListener('click', async () => {
+        const email = linkBtn.dataset.email!;
+        linkBtn.disabled = true;
+        linkBtn.textContent = 'Sending...';
+        const res = await fetch('/api/admin/send-magic-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        if (res.ok) {
+          linkBtn.textContent = '✓ Sent!';
+          setTimeout(() => {
+            linkBtn.textContent = '🔗 Send Login Link';
+            linkBtn.disabled = false;
+          }, 3000);
+        } else {
+          linkBtn.textContent = 'Failed';
+          linkBtn.disabled = false;
+        }
+      });
+    }
   });
 </script>
