@@ -34,6 +34,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const pushoverUser   = env.PUSHOVER_USER;
   const telegramToken  = env.TELEGRAM_TOKEN;
   const telegramChatId = env.TELEGRAM_CHAT_ID;
+  const resendApiKey   = env.RESEND_API_KEY;
 
   const sends: Promise<Response>[] = [];
 
@@ -54,6 +55,33 @@ export const POST: APIRoute = async ({ request, locals }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chat_id: telegramChatId, text }),
+      })
+    );
+  }
+
+  if (resendApiKey) {
+    const htmlBody = `
+      <h2>New Minus One Labs Inquiry</h2>
+      <p><strong>Name:</strong> ${name}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      ${company ? `<p><strong>Company:</strong> ${company}</p>` : ''}
+      ${needs ? `<p><strong>Needs:</strong> ${needs}</p>` : ''}
+      <p><strong>Message:</strong><br>${message.replace(/\n/g, '<br>')}</p>
+    `;
+    sends.push(
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${resendApiKey}`,
+        },
+        body: JSON.stringify({
+          from: 'Minus One Labs <noreply@minus-one-labs.com>',
+          to: 'admin@stunna.xyz',
+          reply_to: email,
+          subject: `New Inquiry from ${name}`,
+          html: htmlBody,
+        }),
       })
     );
   }
