@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   const data = await request.formData();
 
   const name    = data.get('name')?.toString().trim() ?? '';
@@ -27,10 +27,13 @@ export const POST: APIRoute = async ({ request }) => {
     .filter(Boolean)
     .join('\n');
 
-  const pushoverToken = import.meta.env.PUSHOVER_TOKEN;
-  const pushoverUser  = import.meta.env.PUSHOVER_USER;
-  const telegramToken = import.meta.env.TELEGRAM_TOKEN;
-  const telegramChatId = import.meta.env.TELEGRAM_CHAT_ID;
+  // Access secrets from Cloudflare runtime (not import.meta.env which is build-time only)
+  const runtime = (locals as any).runtime;
+  const env = runtime?.env ?? {};
+  const pushoverToken  = env.PUSHOVER_TOKEN;
+  const pushoverUser   = env.PUSHOVER_USER;
+  const telegramToken  = env.TELEGRAM_TOKEN;
+  const telegramChatId = env.TELEGRAM_CHAT_ID;
 
   const sends: Promise<Response>[] = [];
 

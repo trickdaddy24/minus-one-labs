@@ -51,7 +51,7 @@
             Google SEO optimization
           </label>
           <label class="flex items-center gap-2">
-            <input type="checkbox" name="needs" value="All of the above" class="accent-[#635bff]" />
+            <input type="checkbox" name="needs" value="All of the above" id="allCheckbox" class="accent-[#635bff]" />
             All of the above
           </label>
         </div>
@@ -88,6 +88,20 @@
 </section>
 
 <script>
+  // "All of the above" toggle logic
+  const allCheckbox = document.getElementById('allCheckbox') as HTMLInputElement;
+  const individualBoxes = document.querySelectorAll<HTMLInputElement>('input[name="needs"]:not(#allCheckbox)');
+
+  allCheckbox.addEventListener('change', () => {
+    individualBoxes.forEach(cb => cb.checked = allCheckbox.checked);
+  });
+
+  individualBoxes.forEach(cb => {
+    cb.addEventListener('change', () => {
+      allCheckbox.checked = Array.from(individualBoxes).every(c => c.checked);
+    });
+  });
+
   const form = document.getElementById('leadForm') as HTMLFormElement;
   const submitBtn = document.getElementById('submitBtn') as HTMLButtonElement;
   const successMsg = document.getElementById('successMsg')!;
