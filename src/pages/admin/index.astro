@@ -1,0 +1,145 @@
+---
+import Layout from '../../layouts/Layout.astro';
+const session = (Astro.locals as any).session;
+const db = (Astro.locals as any).runtime?.env?.DB;
+
+const { results: quotes } = await db.prepare(
+  `SELECT q.*, qn.has_photos, qn.company_history, qn.contact_methods, qn.preferred_domain, qn.other_requests, qn.submitted_at as q_submitted
+   FROM quotes q
+   LEFT JOIN questionnaires qn ON qn.quote_id = q.id
+   ORDER BY q.created_at DESC`
+).all();
+
+const counts = {
+  total: quotes.length,
+  pending: quotes.filter((q: any) => q.status === 'pending').length,
+  proposal_sent: quotes.filter((q: any) => q.status === 'proposal_sent').length,
+  accepted: quotes.filter((q: any) => q.status === 'accepted').length,
+  launched: quotes.filter((q: any) => q.status === 'launched').length,
+};
+
+const statusColor: Record<string, string> = {
+  pending: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+  proposal_sent: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  accepted: 'bg-green-500/20 text-green-300 border-green-500/30',
+  launched: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+};
+---
+
+<Layout title="Admin Dashboard — Minus One Labs">
+  <div class="min-h-screen bg-[#060f1a] text-white">
+
+    <!-- Top nav -->
+    <div class="border-b border-white/10 px-8 py-4 flex items-center justify-between">
+      <span class="font-heading font-semibold text-lg">Minus One Labs <span class="text-zinc-500 font-normal text-sm ml-2">Admin</span></span>
+      <form method="POST" action="/api/auth/logout">
+        <button class="text-sm text-zinc-400 hover:text-white border border-white/20 px-4 py-2 rounded-xl transition">Sign out</button>
+      </form>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-8 py-10">
+
+      <!-- Stats -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        {[
+          { label: 'Total Inquiries', value: counts.total, color: 'text-white' },
+          { label: 'Pending', value: counts.pending, color: 'text-yellow-300' },
+          { label: 'Accepted', value: counts.accepted, color: 'text-green-300' },
+          { label: 'Launched', value: counts.launched, color: 'text-purple-300' },
+        ].map(stat => (
+          <div class="bg-[#0f1f35] border border-white/10 rounded-2xl p-5">
+            <div class={`text-3xl font-bold ${stat.color}`}>{stat.value}</div>
+            <div class="text-zinc-400 text-sm mt-1">{stat.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Quotes table -->
+      <h2 class="text-xl font-semibold mb-4">All Inquiries</h2>
+
+      {quotes.length === 0 ? (
+        <div class="bg-[#0f1f35] rounded-2xl p-10 text-center text-zinc-400">No inquiries yet.</div>
+      ) : (
+        <div class="space-y-4">
+          {quotes.map((q: any) => (
+            <div class="bg-[#0f1f35] border border-white/10 rounded-2xl p-6" data-id={q.id}>
+              <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+                <div>
+                  <div class="font-semibold text-lg">{q.company || q.name}</div>
+                  <div class="text-zinc-400 text-sm">{q.email} · {new Date(q.created_at).toLocaleDateString()}</div>
+                  {q.needs && <div class="text-zinc-500 text-xs mt-1">Needs: {q.needs}</div>}
+                </div>
+                <span class={`text-xs font-medium px-3 py-1 rounded-full border status-badge ${statusColor[q.status] ?? 'bg-white/10 text-white'}`}>
+                  {q.status.replace('_', ' ')}
+                </span>
+              </div>
+
+              <p class="text-zinc-300 text-sm mb-4 leading-relaxed">{q.message}</p>
+
+              {/* Questionnaire answers */}
+              {q.q_submitted && (
+                <div class="bg-[#060f1a] rounded-xl p-4 mb-4 text-sm space-y-2">
+                  <div class="text-zinc-400 font-medium text-xs uppercase tracking-wider mb-3">Questionnaire</div>
+                  {q.has_photos && <div><span class="text-zinc-500">Photos:</span> {q.has_photos}</div>}
+                  {q.company_history && <div><span class="text-zinc-500">About:</span> {q.company_history}</div>}
+                  {q.contact_methods && <div><span class="text-zinc-500">Contact via:</span> {q.contact_methods}</div>}
+                  {q.preferred_domain && <div><span class="text-zinc-500">Domain:</span> {q.preferred_domain}</div>}
+                  {q.other_requests && <div><span class="text-zinc-500">Other:</span> {q.other_requests}</div>}
+                </div>
+              )}
+
+              {/* Admin controls */}
+              <div class="flex flex-wrap gap-3 items-end">
+                <div class="flex-1 min-w-48">
+                  <textarea
+                    class="note-input w-full bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white placeholder-zinc-500 resize-none"
+                    rows="2"
+                    placeholder="Note to client (optional)"
+                  >{q.admin_note ?? ''}</textarea>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  {['pending','proposal_sent','accepted','launched'].map(s => (
+                    <button
+                      data-status={s}
+                      class={`status-btn text-xs px-3 py-2 rounded-xl border transition ${q.status === s ? 'bg-[#635bff] border-[#635bff] text-white' : 'border-white/20 text-zinc-400 hover:border-white/40'}`}
+                    >
+                      {s.replace('_',' ')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<script>
+  document.querySelectorAll('[data-id]').forEach(card => {
+    const id = card.getAttribute('data-id')!;
+    card.querySelectorAll<HTMLButtonElement>('.status-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const status = btn.dataset.status!;
+        const note = (card.querySelector('.note-input') as HTMLTextAreaElement).value;
+
+        await fetch('/api/admin/quotes', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status, admin_note: note }),
+        });
+
+        // Update button styles
+        card.querySelectorAll<HTMLButtonElement>('.status-btn').forEach(b => {
+          b.className = b.className.replace('bg-[#635bff] border-[#635bff] text-white', 'border-white/20 text-zinc-400 hover:border-white/40');
+        });
+        btn.className = btn.className.replace('border-white/20 text-zinc-400 hover:border-white/40', 'bg-[#635bff] border-[#635bff] text-white');
+
+        // Update badge
+        const badge = card.querySelector('.status-badge')!;
+        badge.textContent = status.replace('_', ' ');
+      });
+    });
+  });
+</script>

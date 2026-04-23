@@ -1,0 +1,65 @@
+---
+import Layout from '../../layouts/Layout.astro';
+const session = (Astro.locals as any).session;
+if (session?.role === 'admin') return Astro.redirect('/admin');
+
+const db = (Astro.locals as any).runtime?.env?.DB;
+const hasAdmin = db ? await db.prepare(`SELECT id FROM admin_users LIMIT 1`).first() : null;
+---
+
+<Layout title="Admin Login — Minus One Labs">
+  <div class="min-h-screen bg-[#060f1a] flex items-center justify-center px-6">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <div class="text-[#635bff] text-3xl mb-3">⚙️</div>
+        <h1 class="text-2xl font-heading font-semibold">Admin Access</h1>
+      </div>
+
+      {!hasAdmin && (
+        <div class="mb-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-2xl text-yellow-300 text-sm text-center">
+          No admin account yet. <a href="/admin/setup" class="underline font-medium">Create one first →</a>
+        </div>
+      )}
+
+      <form id="loginForm" class="space-y-4">
+        <input type="text" id="username" placeholder="Username" required
+          class="w-full bg-[#0f1f35] border border-white/10 focus:border-[#635bff] rounded-xl px-5 py-4 outline-none text-white placeholder-zinc-500" />
+        <input type="password" id="password" placeholder="Password" required
+          class="w-full bg-[#0f1f35] border border-white/10 focus:border-[#635bff] rounded-xl px-5 py-4 outline-none text-white placeholder-zinc-500" />
+        <div id="errorMsg" class="hidden text-red-400 text-sm text-center">Invalid credentials</div>
+        <button type="submit" id="submitBtn"
+          class="w-full bg-[#635bff] hover:bg-[#7e6bfd] py-4 font-semibold rounded-xl transition">
+          Sign In
+        </button>
+      </form>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  document.getElementById('loginForm')!.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn') as HTMLButtonElement;
+    const err = document.getElementById('errorMsg')!;
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+    err.classList.add('hidden');
+
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: (document.getElementById('username') as HTMLInputElement).value,
+        password: (document.getElementById('password') as HTMLInputElement).value,
+      }),
+    });
+
+    if (res.ok) {
+      window.location.href = '/admin';
+    } else {
+      err.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  });
+</script>

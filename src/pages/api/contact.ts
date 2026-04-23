@@ -104,6 +104,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 
+  // Save quote to D1
+  const db = env.DB;
+  if (db) {
+    await db.prepare(
+      `INSERT INTO users (email) VALUES (?) ON CONFLICT(email) DO NOTHING`
+    ).bind(email).run();
+    const user = await db.prepare(`SELECT id FROM users WHERE email = ?`).bind(email).first() as { id: string } | null;
+    await db.prepare(
+      `INSERT INTO quotes (user_id, name, email, company, needs, message) VALUES (?, ?, ?, ?, ?, ?)`
+    ).bind(user?.id ?? null, name, email, company || null, needs || null, message).run();
+  }
+
   try {
     await Promise.all(sends);
     return new Response(JSON.stringify({ success: true }), {

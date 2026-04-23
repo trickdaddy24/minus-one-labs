@@ -1,0 +1,147 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const session = (Astro.locals as any).session;
+const db = (Astro.locals as any).runtime?.env?.DB;
+const quote_id = Astro.url.searchParams.get('quote_id');
+
+if (!quote_id) return Astro.redirect('/dashboard');
+
+const quote = await db.prepare(
+  `SELECT * FROM quotes WHERE id = ? AND email = ? AND status = 'accepted'`
+).bind(quote_id, session.email).first();
+
+if (!quote) return Astro.redirect('/dashboard');
+
+const existing = await db.prepare(
+  `SELECT * FROM questionnaires WHERE quote_id = ?`
+).bind(quote_id).first();
+---
+
+<Layout title="Questionnaire — Minus One Labs">
+  <div class="min-h-screen bg-[#0a2540] px-6 py-12">
+    <div class="max-w-2xl mx-auto">
+      <a href="/dashboard" class="text-zinc-400 hover:text-white text-sm mb-8 inline-block">← Back to dashboard</a>
+
+      <h1 class="text-3xl font-heading font-semibold mb-2">Site Questionnaire</h1>
+      <p class="text-zinc-400 mb-10">Help us build your perfect website. This takes about 10 minutes.</p>
+
+      {existing ? (
+        <div class="bg-green-500/20 border border-green-500/40 rounded-3xl p-8 text-center">
+          <p class="text-green-300 text-lg font-semibold mb-2">✓ Questionnaire already submitted</p>
+          <p class="text-zinc-400 text-sm">We received your answers and are working on your site. We'll be in touch soon.</p>
+        </div>
+      ) : (
+        <form id="qForm" class="space-y-8">
+          <input type="hidden" name="quote_id" value={quote_id} />
+
+          <div>
+            <label class="block font-medium mb-3">Can you provide photos for the website?</label>
+            <p class="text-zinc-400 text-sm mb-3">If yes, email them to <span class="text-[#635bff]">admin@stunna.xyz</span> after submitting this form.</p>
+            <div class="flex gap-4">
+              {['Yes', 'No', 'I will find some online'].map(opt => (
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="has_photos" value={opt} required class="accent-[#635bff]" />
+                  <span class="text-sm">{opt}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-medium mb-2">Tell us the history of your company</label>
+            <p class="text-zinc-400 text-xs mb-3">This will appear on your About Us section. When did you start? What's your story?</p>
+            <textarea
+              name="company_history"
+              rows="5"
+              required
+              placeholder="We started in 2015 when..."
+              class="w-full bg-[#1a3a66] border border-white/20 focus:border-[#635bff] rounded-2xl px-5 py-4 outline-none text-white placeholder-zinc-400"
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="block font-medium mb-3">How should customers reach you?</label>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              {['Phone', 'Email', 'Telegram', 'WhatsApp', 'Contact form only', 'Other'].map(opt => (
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="contact_methods" value={opt} class="accent-[#635bff]" />
+                  {opt}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-medium mb-2">Do you have a domain in mind?</label>
+            <input
+              type="text"
+              name="preferred_domain"
+              placeholder="e.g. mybakery.com (leave blank if unsure)"
+              class="w-full bg-[#1a3a66] border border-white/20 focus:border-[#635bff] rounded-2xl px-5 py-4 outline-none text-white placeholder-zinc-400"
+            />
+          </div>
+
+          <div>
+            <label class="block font-medium mb-2">Any other requests?</label>
+            <textarea
+              name="other_requests"
+              rows="4"
+              placeholder="Specific colors, features, style preferences..."
+              class="w-full bg-[#1a3a66] border border-white/20 focus:border-[#635bff] rounded-2xl px-5 py-4 outline-none text-white placeholder-zinc-400"
+            ></textarea>
+          </div>
+
+          <button
+            type="submit"
+            id="submitBtn"
+            class="w-full bg-[#635bff] hover:bg-[#7e6bfd] py-5 text-lg font-semibold rounded-2xl transition"
+          >
+            Submit Questionnaire
+          </button>
+
+          <div id="errorMsg" class="hidden text-center p-4 bg-red-500/20 border border-red-500/40 rounded-2xl text-red-300 text-sm">
+            Something went wrong. Please try again.
+          </div>
+        </form>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const form = document.getElementById('qForm') as HTMLFormElement;
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn') as HTMLButtonElement;
+      const err = document.getElementById('errorMsg')!;
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      const fd = new FormData(form);
+      const contact_methods = (fd.getAll('contact_methods') as string[]).join(', ');
+
+      const res = await fetch('/api/questionnaire', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quote_id: fd.get('quote_id'),
+          has_photos: fd.get('has_photos'),
+          company_history: fd.get('company_history'),
+          contact_methods,
+          preferred_domain: fd.get('preferred_domain'),
+          other_requests: fd.get('other_requests'),
+        }),
+      });
+
+      if (res.ok) {
+        window.location.href = '/dashboard';
+      } else {
+        err.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Submit Questionnaire';
+      }
+    });
+  }
+</script>
