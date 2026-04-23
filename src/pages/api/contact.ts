@@ -34,7 +34,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const pushoverUser   = env.PUSHOVER_USER;
   const telegramToken  = env.TELEGRAM_TOKEN;
   const telegramChatId = env.TELEGRAM_CHAT_ID;
-  const resendApiKey   = env.RESEND_API_KEY;
+  const resendApiKey      = env.RESEND_API_KEY;
+  const turnstileSecret   = env.TURNSTILE_SECRET;
+
+  // Verify Turnstile token
+  const turnstileToken = data.get('cf-turnstile-response')?.toString() ?? '';
+  if (turnstileSecret) {
+    const verify = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: turnstileSecret, response: turnstileToken }),
+    });
+    const result = await verify.json() as { success: boolean };
+    if (!result.success) {
+      return new Response(JSON.stringify({ error: 'Bot verification failed' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
 
   const sends: Promise<Response>[] = [];
 

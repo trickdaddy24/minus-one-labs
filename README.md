@@ -240,7 +240,8 @@ Edit the `testimonials` array in `src/components/Testimonials.astro`. Each entry
 ### Phase 1 — Marketing Site ✅
 - [x] Hero, Services, Portfolio, Testimonials, Process, Contact sections
 - [x] CSS infinite-scroll dual-row testimonials
-- [x] Contact form → Pushover + Telegram admin notifications
+- [x] Contact form → Pushover + Telegram + Resend email notifications
+- [x] Cloudflare Turnstile bot protection on contact form
 - [x] Cloudflare Pages deployment (SSR mode)
 - [x] SEO: schema markup, meta tags, fast load times
 
