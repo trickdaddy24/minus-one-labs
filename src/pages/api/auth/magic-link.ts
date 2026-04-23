@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     `INSERT INTO magic_links (email, token, expires_at) VALUES (?, ?, ?)`
   ).bind(email, token, expires).run();
 
-  const link = `https://minus-one-labs.com/auth/verify?token=${token}`;
+  const link = `https://minus-one-labs.com/api/auth/verify?token=${token}`;
 
   if (resendKey) {
     await fetch('https://api.resend.com/emails', {
