@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { generateToken, expiresAt } from '../../../lib/auth';
+import { generateToken, expiresAt, getClientIp } from '../../../lib/auth';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const env = (locals as any).runtime?.env ?? {};
@@ -20,10 +20,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const token = generateToken();
   const expires = expiresAt(15);
+  const ip = getClientIp(request);
 
+  // Rate limit: block after 5 failed attempts in 15 min window
+  const setting = await db.prepare(`SELECT value FROM site_settings WHERE key = 'rate_limit_attempts'`).first() as { value: string } | null;
+  const limit = parseInt(setting?.value ?? '5');
+  const recent = await db.prepare(
+    `SELECT COUNT(*) as cnt FROM login_attempts
+     WHERE ip = ? AND success = 0 AND created_at > datetime('now', '-15 minutes')`
+  ).bind(ip).first() as { cnt: number };
+  if (recent.cnt >= limit) {
+    return new Response(JSON.stringify({ error: 'Too many attempts. Try again in 15 minutes.' }), { status: 429 });
+  }
+
+  await db.prepare(`INSERT INTO login_attempts (ip, email, success) VALUES (?, ?, 0)`).bind(ip, email).run();
   await db.prepare(
-    `INSERT INTO magic_links (email, token, expires_at) VALUES (?, ?, ?)`
-  ).bind(email, token, expires).run();
+    `INSERT INTO magic_links (email, token, expires_at, requesting_ip) VALUES (?, ?, ?, ?)`
+  ).bind(email, token, expires, ip).run();
 
   const link = `https://minus-one-labs.com/api/auth/verify?token=${token}`;
 

@@ -1,0 +1,91 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+
+const faqs = [
+  {
+    q: 'How long does it take to get my website live?',
+    a: 'We deliver your completed website within 14 days of receiving your questionnaire and content. Most projects are done in 7–10 days. Timeline starts after you fill out the onboarding questionnaire — the faster you respond, the faster you launch.',
+  },
+  {
+    q: 'What do I need to provide to get started?',
+    a: 'Very little. After your quote is accepted, you\'ll fill out a 10-minute questionnaire covering your business story, contact preferences, and any photos or special requests. We handle everything else — copy, design, SEO, hosting, and deployment.',
+  },
+  {
+    q: 'How much does a website cost?',
+    a: 'We offer three tiers: Basic ($500), Standard ($1,500), and Premium ($3,000) — all one-time fees with no recurring charges. Hosting is included on Cloudflare Pages (free tier, no ongoing cost to you). Domain registration is separate, starting at ~$12/year.',
+  },
+  {
+    q: 'Do you handle hosting, domain name, and ongoing updates?',
+    a: 'Yes. Hosting is included for free on Cloudflare Pages — global CDN, SSL certificate, and blazing fast load times. We assist with domain setup and registration. Ongoing updates depend on your tier: Premium includes 3 months of updates. For other tiers, we offer affordable maintenance packages.',
+  },
+  {
+    q: 'Is the website mobile-friendly and good for SEO?',
+    a: 'Absolutely. Every site we build is mobile-first by design using Tailwind CSS. SEO is baked in from day one: schema markup, fast load times (Astro is one of the fastest frameworks available), meta tags, and local search optimization. Many clients see Google rankings improve within the first few weeks.',
+  },
+  {
+    q: 'Can I make changes myself later, or do I need to pay you every time?',
+    a: 'We can set up a simple way for you to update text and images yourself if desired. For structural changes or new sections, we offer affordable update packages. Premium clients get 3 months of included changes. We\'re always transparent about what\'s included and what\'s extra — no surprises.',
+  },
+];
+---
+
+<Layout title="Support & FAQ — Minus One Labs" description="Answers to the most common questions about Minus One Labs websites, pricing, timeline, and process.">
+  <Navbar />
+  <div class="pt-32 pb-24 bg-[#0a2540] min-h-screen">
+    <div class="max-w-3xl mx-auto px-6">
+
+      <div class="text-center mb-14">
+        <h1 class="text-5xl font-heading font-semibold mb-4">Support & FAQ</h1>
+        <p class="text-zinc-400">Everything you need to know before getting started.</p>
+      </div>
+
+      <div class="space-y-4 mb-16">
+        {faqs.map((faq, i) => (
+          <div class="faq-item bg-[#1a3a66] border border-white/10 rounded-2xl overflow-hidden">
+            <button
+              class="faq-toggle w-full text-left px-6 py-5 flex items-center justify-between gap-4 font-medium hover:bg-white/5 transition"
+              data-index={i}
+            >
+              <span>{faq.q}</span>
+              <svg class="faq-icon w-5 h-5 flex-shrink-0 text-[#635bff] transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <div class="faq-answer hidden px-6 pb-5 text-zinc-300 text-sm leading-relaxed border-t border-white/10 pt-4">
+              {faq.a}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <!-- Still have questions -->
+      <div class="bg-[#1a3a66] border border-white/10 rounded-3xl p-8 text-center">
+        <h2 class="text-xl font-semibold mb-3">Still have questions?</h2>
+        <p class="text-zinc-400 text-sm mb-6">We reply to every inquiry within 24 hours.</p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <a href="/#contact" class="bg-[#635bff] hover:bg-[#7e6bfd] px-6 py-3 rounded-2xl font-semibold text-sm transition">
+            Send Us a Message
+          </a>
+          <a href="mailto:admin@stunna.xyz" class="border border-white/20 hover:border-white/40 px-6 py-3 rounded-2xl text-sm transition">
+            admin@stunna.xyz
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</Layout>
+
+<script>
+  document.querySelectorAll('.faq-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item')!;
+      const answer = item.querySelector('.faq-answer')!;
+      const icon = btn.querySelector('.faq-icon')!;
+      const isOpen = !answer.classList.contains('hidden');
+      answer.classList.toggle('hidden', isOpen);
+      icon.classList.toggle('rotate-180', !isOpen);
+    });
+  });
+</script>

@@ -1,0 +1,266 @@
+---
+import Layout from '../../layouts/Layout.astro';
+const db = (Astro.locals as any).runtime?.env?.DB;
+
+const [{ results: blockedIps }, { results: recentAttempts }, { results: visitorLogs }, { results: settings }, { results: promos }] = await Promise.all([
+  db.prepare(`SELECT * FROM blocked_ips ORDER BY blocked_at DESC`).all(),
+  db.prepare(`SELECT * FROM login_attempts ORDER BY created_at DESC LIMIT 50`).all(),
+  db.prepare(`SELECT vl.*, u.email FROM visitor_logs vl LEFT JOIN users u ON u.id = vl.user_id ORDER BY vl.created_at DESC LIMIT 100`).all(),
+  db.prepare(`SELECT * FROM site_settings`).all(),
+  db.prepare(`SELECT * FROM promo_codes ORDER BY created_at DESC`).all(),
+]);
+
+const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.value]));
+---
+
+<Layout title="Security — Minus One Labs Admin">
+  <div class="min-h-screen bg-[#060f1a] text-white">
+
+    <!-- Nav -->
+    <div class="border-b border-white/10 px-8 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a href="/admin" class="text-zinc-400 hover:text-white text-sm transition">← Dashboard</a>
+        <span class="font-heading font-semibold">Security & Settings</span>
+      </div>
+      <form method="POST" action="/api/auth/logout">
+        <button class="text-sm text-zinc-400 hover:text-white border border-white/20 px-4 py-2 rounded-xl transition">Sign out</button>
+      </form>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-8 py-10">
+
+      <!-- Tabs -->
+      <div class="flex gap-2 mb-8 border-b border-white/10 pb-0">
+        {['Settings', 'Promo Codes', 'Blocked IPs', 'Visitor Logs', 'Login Attempts'].map((tab, i) => (
+          <button
+            data-tab={i}
+            class={`tab-btn px-5 py-3 text-sm font-medium border-b-2 transition -mb-px ${i === 0 ? 'border-[#635bff] text-white' : 'border-transparent text-zinc-400 hover:text-white'}`}
+          >{tab}</button>
+        ))}
+      </div>
+
+      <!-- Settings tab -->
+      <div id="tab-0" class="tab-panel space-y-4">
+        {[
+          { key: 'rate_limit_attempts', label: 'Max login attempts before block', type: 'number' },
+          { key: 'rate_limit_window_minutes', label: 'Rate limit window (minutes)', type: 'number' },
+          { key: 'inactivity_timeout_minutes', label: 'Inactivity timeout (minutes)', type: 'number' },
+          { key: 'registration_open', label: 'Registration open (1=yes, 0=no)', type: 'number' },
+        ].map(s => (
+          <div class="flex items-center gap-4 bg-[#0f1f35] border border-white/10 rounded-xl px-6 py-4">
+            <label class="flex-1 text-sm text-zinc-300">{s.label}</label>
+            <input
+              type={s.type}
+              data-key={s.key}
+              value={settingsMap[s.key] ?? ''}
+              class="setting-input w-24 bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-lg px-3 py-2 text-sm outline-none text-white text-center"
+            />
+            <button data-key={s.key} class="save-setting text-xs bg-[#635bff] hover:bg-[#7e6bfd] px-4 py-2 rounded-lg transition">Save</button>
+          </div>
+        ))}
+      </div>
+
+      <!-- Promo Codes tab -->
+      <div id="tab-1" class="tab-panel hidden">
+        <div class="bg-[#0f1f35] border border-white/10 rounded-2xl p-6 mb-6">
+          <h3 class="font-semibold mb-4">Create Promo Code</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <input id="promoCode" placeholder="CODE" class="bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white uppercase" />
+            <input id="promoPct" type="number" placeholder="Discount %" min="1" max="100" class="bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white" />
+            <input id="promoMax" type="number" placeholder="Max uses (blank = unlimited)" class="bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white" />
+            <input id="promoExpiry" type="date" class="bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white" />
+          </div>
+          <button id="createPromo" class="mt-3 bg-[#635bff] hover:bg-[#7e6bfd] px-5 py-2.5 rounded-xl text-sm font-semibold transition">Create Code</button>
+        </div>
+
+        <div class="space-y-3" id="promoList">
+          {(promos as any[]).map(p => (
+            <div class="flex items-center gap-4 bg-[#0f1f35] border border-white/10 rounded-xl px-5 py-4" data-promo-id={p.id}>
+              <span class="font-mono font-bold text-[#635bff] text-sm w-28">{p.code}</span>
+              <span class="text-sm text-zinc-300 flex-1">{p.discount_pct}% off · {p.uses} uses{p.max_uses ? ` / ${p.max_uses}` : ''}{p.expires_at ? ` · expires ${p.expires_at.slice(0,10)}` : ''}</span>
+              <span class={`text-xs px-2 py-1 rounded-full ${p.active ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                {p.active ? 'Active' : 'Inactive'}
+              </span>
+              <button data-id={p.id} data-active={p.active} class="toggle-promo text-xs border border-white/20 hover:border-white/40 px-3 py-1.5 rounded-lg transition">
+                {p.active ? 'Disable' : 'Enable'}
+              </button>
+              <button data-id={p.id} class="delete-promo text-xs text-red-400 hover:text-red-300 border border-red-400/30 hover:border-red-400/60 px-3 py-1.5 rounded-lg transition">Del</button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Blocked IPs tab -->
+      <div id="tab-2" class="tab-panel hidden">
+        <div class="flex gap-3 mb-6">
+          <input id="blockIpInput" placeholder="IP address to block" class="flex-1 bg-[#0f1f35] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white" />
+          <input id="blockIpReason" placeholder="Reason (optional)" class="flex-1 bg-[#0f1f35] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white" />
+          <button id="blockIpBtn" class="bg-red-500 hover:bg-red-600 px-5 py-3 rounded-xl text-sm font-semibold transition">Block IP</button>
+        </div>
+        <div class="space-y-3" id="blockedList">
+          {(blockedIps as any[]).length === 0 ? (
+            <p class="text-zinc-500 text-sm">No blocked IPs.</p>
+          ) : (blockedIps as any[]).map(b => (
+            <div class="flex items-center gap-4 bg-[#0f1f35] border border-white/10 rounded-xl px-5 py-3" data-ip={b.ip}>
+              <span class="font-mono text-sm text-red-300 w-36">{b.ip}</span>
+              <span class="text-zinc-400 text-xs flex-1">{b.reason ?? 'No reason'} · {b.blocked_at.slice(0,10)}</span>
+              <button data-ip={b.ip} class="unblock-btn text-xs border border-white/20 hover:border-green-400/50 hover:text-green-300 px-3 py-1.5 rounded-lg transition">Unblock</button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Visitor Logs tab -->
+      <div id="tab-3" class="tab-panel hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-zinc-500 text-xs border-b border-white/10">
+                <th class="text-left py-3 pr-4">Email</th>
+                <th class="text-left py-3 pr-4">IP</th>
+                <th class="text-left py-3 pr-4">Location</th>
+                <th class="text-left py-3 pr-4">Page</th>
+                <th class="text-left py-3">Time</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              {(visitorLogs as any[]).map(v => (
+                <tr class="hover:bg-white/5">
+                  <td class="py-2.5 pr-4 text-zinc-300">{v.email ?? '—'}</td>
+                  <td class="py-2.5 pr-4 font-mono text-xs text-zinc-400">{v.ip ?? '—'}</td>
+                  <td class="py-2.5 pr-4 text-zinc-400 text-xs">{[v.city, v.country].filter(Boolean).join(', ') || '—'}</td>
+                  <td class="py-2.5 pr-4 text-zinc-400 text-xs">{v.page}</td>
+                  <td class="py-2.5 text-zinc-500 text-xs">{v.created_at.slice(0,16).replace('T',' ')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Login Attempts tab -->
+      <div id="tab-4" class="tab-panel hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-zinc-500 text-xs border-b border-white/10">
+                <th class="text-left py-3 pr-4">IP</th>
+                <th class="text-left py-3 pr-4">Email</th>
+                <th class="text-left py-3 pr-4">Result</th>
+                <th class="text-left py-3">Time</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              {(recentAttempts as any[]).map(a => (
+                <tr class="hover:bg-white/5">
+                  <td class="py-2.5 pr-4 font-mono text-xs text-zinc-400">{a.ip}</td>
+                  <td class="py-2.5 pr-4 text-zinc-300 text-xs">{a.email ?? '—'}</td>
+                  <td class="py-2.5 pr-4">
+                    <span class={`text-xs px-2 py-0.5 rounded-full ${a.success ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                      {a.success ? 'Success' : 'Failed'}
+                    </span>
+                  </td>
+                  <td class="py-2.5 text-zinc-500 text-xs">{a.created_at.slice(0,16).replace('T',' ')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('border-[#635bff]', 'text-white');
+        b.classList.add('border-transparent', 'text-zinc-400');
+      });
+      document.getElementById(`tab-${i}`)!.classList.remove('hidden');
+      btn.classList.add('border-[#635bff]', 'text-white');
+      btn.classList.remove('border-transparent', 'text-zinc-400');
+    });
+  });
+
+  // Settings
+  document.querySelectorAll('.save-setting').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const key = (btn as HTMLElement).dataset.key!;
+      const value = (document.querySelector(`.setting-input[data-key="${key}"]`) as HTMLInputElement).value;
+      await fetch('/api/admin/security', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_setting', key, value }),
+      });
+      btn.textContent = 'Saved!';
+      setTimeout(() => btn.textContent = 'Save', 2000);
+    });
+  });
+
+  // Create promo
+  document.getElementById('createPromo')!.addEventListener('click', async () => {
+    const code = (document.getElementById('promoCode') as HTMLInputElement).value;
+    const pct = (document.getElementById('promoPct') as HTMLInputElement).value;
+    const max = (document.getElementById('promoMax') as HTMLInputElement).value;
+    const exp = (document.getElementById('promoExpiry') as HTMLInputElement).value;
+    if (!code || !pct) return alert('Code and discount % required');
+    await fetch('/api/admin/promo-codes', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, discount_pct: Number(pct), max_uses: max ? Number(max) : undefined, expires_at: exp || undefined }),
+    });
+    location.reload();
+  });
+
+  // Toggle/delete promo
+  document.querySelectorAll('.toggle-promo').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = (btn as HTMLElement).dataset.id!;
+      const active = (btn as HTMLElement).dataset.active === '1';
+      await fetch('/api/admin/promo-codes', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, active: !active }),
+      });
+      location.reload();
+    });
+  });
+  document.querySelectorAll('.delete-promo').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Delete this promo code?')) return;
+      const id = (btn as HTMLElement).dataset.id!;
+      await fetch('/api/admin/promo-codes', {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      location.reload();
+    });
+  });
+
+  // Block IP
+  document.getElementById('blockIpBtn')!.addEventListener('click', async () => {
+    const ip = (document.getElementById('blockIpInput') as HTMLInputElement).value.trim();
+    const reason = (document.getElementById('blockIpReason') as HTMLInputElement).value.trim();
+    if (!ip) return;
+    await fetch('/api/admin/security', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'block_ip', ip, reason }),
+    });
+    location.reload();
+  });
+
+  // Unblock IP
+  document.querySelectorAll('.unblock-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const ip = (btn as HTMLElement).dataset.ip!;
+      await fetch('/api/admin/security', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unblock_ip', ip }),
+      });
+      location.reload();
+    });
+  });
+</script>

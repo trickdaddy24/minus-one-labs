@@ -20,6 +20,11 @@ const error = Astro.url.searchParams.get('error');
           Invalid link. Please try again.
         </div>
       )}
+      {error === 'ip_mismatch' && (
+        <div class="mb-6 p-4 bg-red-500/20 border border-red-500/40 rounded-2xl text-red-300 text-sm text-center">
+          This link can only be used on the same device and network it was requested from. Please request a new link.
+        </div>
+      )}
 
       <form id="loginForm" class="space-y-4">
         <input

@@ -1,0 +1,89 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+
+const posts = [
+  {
+    slug: '#',
+    title: 'Why Local Businesses Need a Website in 2026',
+    excerpt: 'A Google Business profile is a start, but 81% of consumers research online before visiting a local business. Here\'s why a dedicated site still matters.',
+    date: 'Apr 15, 2026',
+    tag: 'Strategy',
+  },
+  {
+    slug: '#',
+    title: '5 Things Every Small Business Website Must Have',
+    excerpt: 'From a clear CTA to mobile-first design — the five non-negotiable elements that turn visitors into leads.',
+    date: 'Apr 8, 2026',
+    tag: 'Design',
+  },
+  {
+    slug: '#',
+    title: 'How We Build a Client Site in 14 Days',
+    excerpt: 'A behind-the-scenes look at our workflow — from questionnaire to deployment — and why our process keeps delivery on time every time.',
+    date: 'Mar 30, 2026',
+    tag: 'Process',
+  },
+  {
+    slug: '#',
+    title: 'Astro vs WordPress for Small Business Sites',
+    excerpt: 'We compared both platforms across speed, cost, SEO, and maintenance. The results might surprise you.',
+    date: 'Mar 20, 2026',
+    tag: 'Tech',
+  },
+  {
+    slug: '#',
+    title: 'Why Cloudflare Pages is the Best Hosting for Small Business Sites',
+    excerpt: 'Free global CDN, SSL, instant deploys, and zero downtime — here\'s why we host every client site on Cloudflare Pages.',
+    date: 'Mar 10, 2026',
+    tag: 'Hosting',
+  },
+  {
+    slug: '#',
+    title: 'How to Get Your First 5 Google Reviews',
+    excerpt: 'Reviews are the #1 trust signal for local businesses. Here\'s a simple system to get your first five — and keep them coming.',
+    date: 'Feb 28, 2026',
+    tag: 'Marketing',
+  },
+];
+
+const tagColors: Record<string, string> = {
+  Strategy: 'bg-purple-500/20 text-purple-300',
+  Design: 'bg-blue-500/20 text-blue-300',
+  Process: 'bg-green-500/20 text-green-300',
+  Tech: 'bg-yellow-500/20 text-yellow-300',
+  Hosting: 'bg-orange-500/20 text-orange-300',
+  Marketing: 'bg-pink-500/20 text-pink-300',
+};
+---
+
+<Layout title="Blog — Minus One Labs" description="Tips, guides, and insights for local small businesses looking to grow their online presence.">
+  <Navbar />
+  <div class="pt-32 pb-24 bg-[#0a2540] min-h-screen">
+    <div class="max-w-5xl mx-auto px-6">
+
+      <div class="text-center mb-14">
+        <h1 class="text-5xl font-heading font-semibold mb-4">Blog</h1>
+        <p class="text-zinc-400">Tips, guides, and insights for local businesses growing online.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {posts.map(post => (
+          <a href={post.slug} class="bg-[#1a3a66] border border-white/10 hover:border-[#635bff]/50 rounded-3xl p-6 flex flex-col transition group">
+            <div class="flex items-center justify-between mb-4">
+              <span class={`text-xs font-medium px-3 py-1 rounded-full ${tagColors[post.tag] ?? 'bg-white/10 text-white'}`}>
+                {post.tag}
+              </span>
+              <span class="text-zinc-500 text-xs">{post.date}</span>
+            </div>
+            <h2 class="font-semibold text-base mb-3 group-hover:text-[#635bff] transition leading-snug">{post.title}</h2>
+            <p class="text-zinc-400 text-sm leading-relaxed flex-1">{post.excerpt}</p>
+            <div class="mt-4 text-[#635bff] text-sm font-medium">Read more →</div>
+          </a>
+        ))}
+      </div>
+
+      <p class="text-center text-zinc-600 text-sm mt-12">More articles coming soon.</p>
+    </div>
+  </div>
+</Layout>

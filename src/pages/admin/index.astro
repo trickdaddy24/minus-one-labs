@@ -29,12 +29,27 @@ const statusColor: Record<string, string> = {
 <Layout title="Admin Dashboard — Minus One Labs">
   <div class="min-h-screen bg-[#060f1a] text-white">
 
+    <!-- Confirm modal -->
+    <div id="confirmModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4">
+      <div class="bg-[#0f1f35] border border-white/20 rounded-2xl p-6 max-w-sm w-full">
+        <h3 class="font-semibold text-lg mb-2">Confirm Status Change</h3>
+        <p id="confirmText" class="text-zinc-400 text-sm mb-6"></p>
+        <div class="flex gap-3">
+          <button id="confirmYes" class="flex-1 bg-[#635bff] hover:bg-[#7e6bfd] py-2.5 rounded-xl text-sm font-semibold transition">Yes, send it</button>
+          <button id="confirmNo" class="flex-1 border border-white/20 hover:border-white/40 py-2.5 rounded-xl text-sm transition">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Top nav -->
     <div class="border-b border-white/10 px-8 py-4 flex items-center justify-between">
       <span class="font-heading font-semibold text-lg">Minus One Labs <span class="text-zinc-500 font-normal text-sm ml-2">Admin</span></span>
-      <form method="POST" action="/api/auth/logout">
-        <button class="text-sm text-zinc-400 hover:text-white border border-white/20 px-4 py-2 rounded-xl transition">Sign out</button>
-      </form>
+      <div class="flex items-center gap-3">
+        <a href="/admin/security" class="text-sm text-zinc-400 hover:text-white border border-white/20 px-4 py-2 rounded-xl transition">Security</a>
+        <form method="POST" action="/api/auth/logout">
+          <button class="text-sm text-zinc-400 hover:text-white border border-white/20 px-4 py-2 rounded-xl transition">Sign out</button>
+        </form>
+      </div>
     </div>
 
     <div class="max-w-6xl mx-auto px-8 py-10">
@@ -128,23 +143,42 @@ const statusColor: Record<string, string> = {
     const id = card.getAttribute('data-id')!;
 
     card.querySelectorAll<HTMLButtonElement>('.status-btn').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', () => {
         const status = btn.dataset.status!;
+        const email = card.querySelector<HTMLElement>('[data-email]')?.dataset.email ?? 'client';
         const note = (card.querySelector('.note-input') as HTMLTextAreaElement).value;
 
-        await fetch('/api/admin/quotes', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, status, admin_note: note }),
-        });
+        const emailActions: Record<string, string> = {
+          proposal_sent: `This will notify ${email} that a proposal has been sent.`,
+          accepted: `This will unlock the questionnaire for ${email}.`,
+          launched: `This will send a "Your site is live!" email to ${email}.`,
+        };
 
-        card.querySelectorAll<HTMLButtonElement>('.status-btn').forEach(b => {
-          b.className = b.className.replace('bg-[#635bff] border-[#635bff] text-white', 'border-white/20 text-zinc-400 hover:border-white/40');
-        });
-        btn.className = btn.className.replace('border-white/20 text-zinc-400 hover:border-white/40', 'bg-[#635bff] border-[#635bff] text-white');
+        const modal = document.getElementById('confirmModal')!;
+        const confirmText = document.getElementById('confirmText')!;
+        confirmText.textContent = emailActions[status] ?? `Change status to "${status.replace('_',' ')}" for ${email}?`;
+        modal.classList.remove('hidden');
 
-        const badge = card.querySelector('.status-badge')!;
-        badge.textContent = status.replace('_', ' ');
+        const yes = document.getElementById('confirmYes')!;
+        const no = document.getElementById('confirmNo')!;
+
+        const cleanup = () => { modal.classList.add('hidden'); yes.replaceWith(yes.cloneNode(true)); no.replaceWith(no.cloneNode(true)); };
+
+        document.getElementById('confirmNo')!.onclick = cleanup;
+        document.getElementById('confirmYes')!.onclick = async () => {
+          cleanup();
+          await fetch('/api/admin/quotes', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status, admin_note: note }),
+          });
+          card.querySelectorAll<HTMLButtonElement>('.status-btn').forEach(b => {
+            b.className = b.className.replace('bg-[#635bff] border-[#635bff] text-white', 'border-white/20 text-zinc-400 hover:border-white/40');
+          });
+          btn.className = btn.className.replace('border-white/20 text-zinc-400 hover:border-white/40', 'bg-[#635bff] border-[#635bff] text-white');
+          const badge = card.querySelector('.status-badge')!;
+          badge.textContent = status.replace('_', ' ');
+        };
       });
     });
 

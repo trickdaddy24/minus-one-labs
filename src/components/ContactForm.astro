@@ -64,6 +64,22 @@
         class="w-full bg-[#1a3a66] border border-white/20 focus:border-[#635bff] rounded-3xl px-6 py-5 outline-none text-white placeholder-zinc-400"
       ></textarea>
 
+      <!-- Promo Code -->
+      <div class="flex gap-3">
+        <input
+          type="text"
+          id="promoInput"
+          placeholder="Promo code (optional)"
+          class="flex-1 bg-[#1a3a66] border border-white/20 focus:border-[#635bff] rounded-2xl px-6 py-4 outline-none text-white placeholder-zinc-400 uppercase"
+        />
+        <button type="button" id="applyPromo"
+          class="px-5 py-4 border border-white/20 hover:border-[#635bff] rounded-2xl text-sm font-medium transition">
+          Apply
+        </button>
+      </div>
+      <div id="promoMsg" class="hidden text-sm px-2"></div>
+      <input type="hidden" id="promoCode" name="promo_code" value="" />
+
       <!-- Cloudflare Turnstile -->
       <div class="cf-turnstile" data-sitekey="0x4AAAAAADCCZGNsfzblCwGe" data-theme="dark"></div>
 
@@ -91,6 +107,29 @@
 </section>
 
 <script>
+  // Promo code
+  document.getElementById('applyPromo')!.addEventListener('click', async () => {
+    const code = (document.getElementById('promoInput') as HTMLInputElement).value.trim();
+    const msg = document.getElementById('promoMsg')!;
+    const hidden = document.getElementById('promoCode') as HTMLInputElement;
+    if (!code) return;
+    const res = await fetch('/api/promo/validate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+    const data = await res.json() as { valid: boolean; discount_pct?: number; error?: string };
+    msg.classList.remove('hidden', 'text-green-400', 'text-red-400');
+    if (data.valid) {
+      msg.textContent = `✓ ${data.discount_pct}% discount applied!`;
+      msg.classList.add('text-green-400');
+      hidden.value = code;
+    } else {
+      msg.textContent = data.error ?? 'Invalid code';
+      msg.classList.add('text-red-400');
+      hidden.value = '';
+    }
+  });
+
   // "All of the above" toggle logic
   const allCheckbox = document.getElementById('allCheckbox') as HTMLInputElement;
   const individualBoxes = document.querySelectorAll<HTMLInputElement>('input[name="needs"]:not(#allCheckbox)');

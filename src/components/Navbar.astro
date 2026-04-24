@@ -1,26 +1,74 @@
 ---
+const session = (Astro.locals as any).session;
 ---
 
 <nav class="border-b border-white/10 bg-[#0a2540]/80 backdrop-blur-md fixed w-full z-50">
-  <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <span class="text-4xl font-light">−1</span>
+  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <!-- Logo -->
+    <a href="/" class="flex items-center gap-3">
+      <span class="text-3xl font-light">−1</span>
       <div>
-        <span class="text-2xl font-semibold tracking-tighter font-heading">Minus One</span>
+        <span class="text-xl font-semibold tracking-tighter font-heading">Minus One</span>
         <span class="text-xs tracking-widest uppercase block -mt-1 text-zinc-400">Labs</span>
       </div>
+    </a>
+
+    <!-- Desktop nav -->
+    <div class="hidden md:flex items-center gap-7 text-sm font-medium">
+      <a href="/" class="hover:text-[#635bff] transition">Home</a>
+      <a href="/#pricing" class="hover:text-[#635bff] transition">Pricing</a>
+      <a href="/blog" class="hover:text-[#635bff] transition">Blog</a>
+      <a href="/about" class="hover:text-[#635bff] transition">About</a>
+      <a href="/support" class="hover:text-[#635bff] transition">Support</a>
     </div>
-    <div class="hidden md:flex items-center gap-8 text-sm font-medium">
-      <a href="#services" class="hover:text-[#635bff] transition">Services</a>
-      <a href="#portfolio" class="hover:text-[#635bff] transition">Work</a>
-      <a href="#how" class="hover:text-[#635bff] transition">Process</a>
-      <a href="#contact" class="hover:text-[#635bff] transition">Get Started</a>
+
+    <!-- Right actions -->
+    <div class="flex items-center gap-3">
+      {session ? (
+        <a href="/dashboard"
+          class="text-sm text-zinc-300 hover:text-white border border-white/20 px-4 py-2 rounded-xl transition">
+          My Dashboard
+        </a>
+      ) : (
+        <a href="/login"
+          class="text-sm text-zinc-300 hover:text-white border border-white/20 px-4 py-2 rounded-xl transition">
+          Sign In
+        </a>
+      )}
+      <a href="/#contact"
+        class="bg-[#635bff] hover:bg-[#7e6bfd] text-white px-5 py-2.5 rounded-2xl text-sm font-semibold transition hidden sm:block">
+        Start Your Project
+      </a>
+
+      <!-- Mobile menu button -->
+      <button id="mobileMenuBtn" class="md:hidden p-2 text-zinc-400 hover:text-white transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
     </div>
-    <a
-      href="#contact"
-      class="bg-[#635bff] hover:bg-[#7e6bfd] text-white px-6 py-3 rounded-2xl font-semibold transition"
-    >
+  </div>
+
+  <!-- Mobile menu -->
+  <div id="mobileMenu" class="hidden md:hidden border-t border-white/10 bg-[#0a2540] px-6 py-4 space-y-3 text-sm">
+    <a href="/" class="block py-2 hover:text-[#635bff] transition">Home</a>
+    <a href="/#pricing" class="block py-2 hover:text-[#635bff] transition">Pricing</a>
+    <a href="/blog" class="block py-2 hover:text-[#635bff] transition">Blog</a>
+    <a href="/about" class="block py-2 hover:text-[#635bff] transition">About</a>
+    <a href="/support" class="block py-2 hover:text-[#635bff] transition">Support</a>
+    {session ? (
+      <a href="/dashboard" class="block py-2 hover:text-[#635bff] transition">My Dashboard</a>
+    ) : (
+      <a href="/login" class="block py-2 hover:text-[#635bff] transition">Sign In</a>
+    )}
+    <a href="/#contact" class="block bg-[#635bff] text-white text-center py-3 rounded-2xl font-semibold mt-2">
       Start Your Project
     </a>
   </div>
 </nav>
+
+<script>
+  document.getElementById('mobileMenuBtn')!.addEventListener('click', () => {
+    document.getElementById('mobileMenu')!.classList.toggle('hidden');
+  });
+</script>
