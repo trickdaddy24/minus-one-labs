@@ -9,7 +9,7 @@ async function hashPassword(password: string): Promise<string> {
 export const PATCH: APIRoute = async ({ request, locals }) => {
   const db = (locals as any).runtime?.env?.DB;
   const session = (locals as any).session;
-  if (!session || session.role !== 'user') {
+  if (!session || !['user', 'customer'].includes(session.role)) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 
