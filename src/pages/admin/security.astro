@@ -20,7 +20,7 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
     <div class="border-b border-white/10 px-8 py-4 flex items-center justify-between">
       <div class="flex items-center gap-4">
         <a href="/admin" class="text-zinc-400 hover:text-white text-sm transition">← Dashboard</a>
-        <span class="font-heading font-semibold">Security & Settings</span>
+        <span class="font-heading font-semibold">Security & Settings <span class="text-zinc-600 font-normal text-xs ml-1">v2.0.0</span></span>
       </div>
       <form method="POST" action="/api/auth/logout">
         <button class="text-sm text-zinc-400 hover:text-white border border-white/20 px-4 py-2 rounded-xl transition">Sign out</button>

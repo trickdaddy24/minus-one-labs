@@ -1,6 +1,6 @@
 # Minus One Labs
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-2.0.0-blue)
 ![Astro](https://img.shields.io/badge/Astro-5-ff5d01?logo=astro)
 ![Tailwind](https://img.shields.io/badge/Tailwind-3-38bdf8?logo=tailwindcss)
 ![Cloudflare](https://img.shields.io/badge/Cloudflare-Pages-f38020?logo=cloudflare)
@@ -231,6 +231,7 @@ Edit the `testimonials` array in `src/components/Testimonials.astro`. Each entry
 
 | Version | Date | Notes |
 |---|---|---|
+| 2.0.0 | 2026-04-23 | Phase 2 — full SaaS platform: auth, customer dashboard, questionnaire, admin panel, security, pricing, promo codes |
 | 1.0.0 | 2026-04-21 | Initial launch — marketing site with dual-row testimonials, contact form, Cloudflare Pages deploy |
 
 ---
