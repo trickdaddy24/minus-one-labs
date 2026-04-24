@@ -5,9 +5,10 @@ const error = Astro.url.searchParams.get('error');
 <Layout title="Sign In — Minus One Labs">
   <div class="min-h-screen bg-[#0a2540] flex items-center justify-center px-6">
     <div class="w-full max-w-md">
+
       <div class="text-center mb-8">
         <h1 class="text-3xl font-heading font-semibold mb-2">Sign in</h1>
-        <p class="text-zinc-400">Enter your email and we'll send you a magic link.</p>
+        <p class="text-zinc-400 text-sm" id="modeDesc">Enter your email and we'll send you a magic link.</p>
       </div>
 
       {error === 'expired' && (
@@ -26,55 +27,148 @@ const error = Astro.url.searchParams.get('error');
         </div>
       )}
 
-      <form id="loginForm" class="space-y-4">
+      <!-- Magic link form -->
+      <form id="magicForm" class="space-y-4">
         <input
           type="email"
-          id="email"
+          id="magicEmail"
           placeholder="you@yourbusiness.com"
           required
           class="w-full bg-[#1a3a66] border border-white/20 focus:border-[#635bff] rounded-2xl px-6 py-4 outline-none text-white placeholder-zinc-400"
         />
-        <button
-          type="submit"
-          id="submitBtn"
-          class="w-full bg-[#635bff] hover:bg-[#7e6bfd] py-4 font-semibold rounded-2xl transition"
-        >
+        <button type="submit" id="magicBtn" class="w-full bg-[#635bff] hover:bg-[#7e6bfd] py-4 font-semibold rounded-2xl transition">
           Send Magic Link
         </button>
+      </form>
+
+      <!-- Password form (hidden by default) -->
+      <form id="passwordForm" class="space-y-4 hidden">
+        <input
+          type="email"
+          id="pwEmail"
+          placeholder="you@yourbusiness.com"
+          required
+          class="w-full bg-[#1a3a66] border border-white/20 focus:border-[#635bff] rounded-2xl px-6 py-4 outline-none text-white placeholder-zinc-400"
+        />
+        <div class="relative">
+          <input
+            type="password"
+            id="pwPassword"
+            placeholder="Password"
+            required
+            class="w-full bg-[#1a3a66] border border-white/20 focus:border-[#635bff] rounded-2xl px-6 py-4 outline-none text-white placeholder-zinc-400 pr-14"
+          />
+          <button type="button" id="togglePw" class="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition text-sm px-2">Show</button>
+        </div>
+        <button type="submit" id="pwBtn" class="w-full bg-[#635bff] hover:bg-[#7e6bfd] py-4 font-semibold rounded-2xl transition">
+          Sign In
+        </button>
+        <div id="pwError" class="hidden p-3 bg-red-500/20 border border-red-500/40 rounded-2xl text-red-300 text-sm text-center"></div>
       </form>
 
       <div id="successMsg" class="hidden mt-6 p-4 bg-green-500/20 border border-green-500/40 rounded-2xl text-green-300 text-sm text-center">
         Check your inbox! A login link is on its way.
       </div>
 
-      <p class="text-center mt-8 text-zinc-500 text-sm">
+      <!-- Toggle between modes -->
+      <div class="text-center mt-6 space-y-2">
+        <button id="switchToPassword" class="text-zinc-500 hover:text-zinc-300 text-sm transition">
+          Sign in with password instead
+        </button>
+        <button id="switchToMagic" class="text-zinc-500 hover:text-zinc-300 text-sm transition hidden">
+          Send me a magic link instead
+        </button>
+      </div>
+
+      <p class="text-center mt-6 text-zinc-500 text-sm">
         <a href="/" class="hover:text-zinc-300 transition">← Back to home</a>
       </p>
+
     </div>
   </div>
 </Layout>
 
 <script>
-  const form = document.getElementById('loginForm') as HTMLFormElement;
-  const btn = document.getElementById('submitBtn') as HTMLButtonElement;
-  const success = document.getElementById('successMsg')!;
+  // Magic link form
+  const magicForm = document.getElementById('magicForm') as HTMLFormElement;
+  const magicBtn = document.getElementById('magicBtn') as HTMLButtonElement;
+  const successMsg = document.getElementById('successMsg')!;
 
-  form.addEventListener('submit', async (e) => {
+  magicForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    btn.disabled = true;
-    btn.textContent = 'Sending...';
-    const email = (document.getElementById('email') as HTMLInputElement).value;
+    magicBtn.disabled = true;
+    magicBtn.textContent = 'Sending...';
+    const email = (document.getElementById('magicEmail') as HTMLInputElement).value;
     const res = await fetch('/api/auth/magic-link', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
     if (res.ok) {
-      form.classList.add('hidden');
-      success.classList.remove('hidden');
+      magicForm.classList.add('hidden');
+      successMsg.classList.remove('hidden');
+      document.getElementById('switchToPassword')!.classList.add('hidden');
+      document.getElementById('switchToMagic')!.classList.add('hidden');
     } else {
-      btn.disabled = false;
-      btn.textContent = 'Send Magic Link';
+      magicBtn.disabled = false;
+      magicBtn.textContent = 'Send Magic Link';
     }
+  });
+
+  // Password form
+  const passwordForm = document.getElementById('passwordForm') as HTMLFormElement;
+  const pwBtn = document.getElementById('pwBtn') as HTMLButtonElement;
+  const pwError = document.getElementById('pwError')!;
+
+  passwordForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    pwError.classList.add('hidden');
+    pwBtn.disabled = true;
+    pwBtn.textContent = 'Signing in...';
+    const email = (document.getElementById('pwEmail') as HTMLInputElement).value;
+    const password = (document.getElementById('pwPassword') as HTMLInputElement).value;
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (res.ok) {
+      window.location.href = '/dashboard';
+    } else {
+      const data = await res.json() as { error?: string };
+      pwError.textContent = data.error ?? 'Invalid email or password.';
+      pwError.classList.remove('hidden');
+      pwBtn.disabled = false;
+      pwBtn.textContent = 'Sign In';
+    }
+  });
+
+  // Password visibility toggle
+  const togglePw = document.getElementById('togglePw') as HTMLButtonElement;
+  const pwInput = document.getElementById('pwPassword') as HTMLInputElement;
+  togglePw.addEventListener('click', () => {
+    const isHidden = pwInput.type === 'password';
+    pwInput.type = isHidden ? 'text' : 'password';
+    togglePw.textContent = isHidden ? 'Hide' : 'Show';
+  });
+
+  // Switch between modes
+  const modeDesc = document.getElementById('modeDesc')!;
+
+  document.getElementById('switchToPassword')!.addEventListener('click', () => {
+    magicForm.classList.add('hidden');
+    passwordForm.classList.remove('hidden');
+    document.getElementById('switchToPassword')!.classList.add('hidden');
+    document.getElementById('switchToMagic')!.classList.remove('hidden');
+    modeDesc.textContent = 'Sign in with your email and password.';
+  });
+
+  document.getElementById('switchToMagic')!.addEventListener('click', () => {
+    passwordForm.classList.remove('hidden', 'hidden');
+    magicForm.classList.remove('hidden');
+    passwordForm.classList.add('hidden');
+    document.getElementById('switchToMagic')!.classList.add('hidden');
+    document.getElementById('switchToPassword')!.classList.remove('hidden');
+    modeDesc.textContent = "Enter your email and we'll send you a magic link.";
   });
 </script>
