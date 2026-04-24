@@ -135,7 +135,7 @@ const borderCls = isLight ? 'border-slate-200' : 'border-white/10';
                 )}
 
                 {/* Accept / Reject CTA */}
-                {q.status === 'proposal_sent' && q.proposal_text && (
+                {q.status === 'proposal_sent' && (
                   <div class={`rounded-2xl p-4 mb-4 border ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/10 border-blue-500/30'}`}>
                     <p class={`text-sm mb-3 ${isLight ? 'text-slate-700' : 'text-zinc-200'}`}>
                       Ready to move forward? Accept the proposal to lock in your plan and unlock the project questionnaire.
