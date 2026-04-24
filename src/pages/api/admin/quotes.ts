@@ -2,12 +2,20 @@ import type { APIRoute } from 'astro';
 
 const SITE = 'https://minus-one-labs.com';
 
+const TIER_LABELS: Record<string, string> = {
+  basic: 'Basic — $500',
+  standard: 'Standard — $1,500',
+  premium: 'Premium — $3,000',
+};
+
 function buildEmailHtml(opts: {
   name: string;
   heading: string;
   body: string;
   cta?: { label: string; url: string };
   note?: string;
+  proposal?: string;
+  tier?: string;
 }): string {
   return `<!DOCTYPE html>
 <html>
@@ -24,6 +32,8 @@ function buildEmailHtml(opts: {
           <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#fff;">${opts.heading}</h2>
           <p style="margin:0 0 12px;color:#94a3b8;font-size:15px;line-height:1.6;">Hi ${opts.name},</p>
           <p style="margin:0 0 24px;color:#cbd5e1;font-size:15px;line-height:1.6;">${opts.body}</p>
+          ${opts.tier ? `<div style="background:#635bff22;border:1px solid #635bff44;border-radius:10px;padding:12px 20px;margin-bottom:24px;"><span style="color:#a5a0ff;font-size:13px;font-weight:600;">Selected Plan: ${TIER_LABELS[opts.tier] ?? opts.tier}</span></div>` : ''}
+          ${opts.proposal ? `<div style="background:#060f1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:20px;margin-bottom:24px;"><strong style="color:#e2e8f0;font-size:14px;display:block;margin-bottom:10px;">Your Proposal:</strong><div style="color:#94a3b8;font-size:14px;line-height:1.7;white-space:pre-wrap;">${opts.proposal}</div></div>` : ''}
           ${opts.note ? `<div style="background:#060f1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:16px 20px;margin-bottom:24px;color:#94a3b8;font-size:14px;line-height:1.5;"><strong style="color:#e2e8f0;">Note from our team:</strong><br>${opts.note}</div>` : ''}
           ${opts.cta ? `<a href="${opts.cta.url}" style="display:inline-block;background:#635bff;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;">${opts.cta.label}</a>` : ''}
         </td></tr>
@@ -44,14 +54,16 @@ async function sendStatusEmail(opts: {
   name: string;
   status: string;
   adminNote?: string;
+  proposalText?: string;
+  priceTier?: string;
 }) {
-  const { to, name, status, adminNote, resendApiKey } = opts;
+  const { to, name, status, adminNote, proposalText, priceTier, resendApiKey } = opts;
 
   const configs: Record<string, { subject: string; heading: string; body: string; cta?: { label: string; url: string } }> = {
     proposal_sent: {
       subject: 'Your Minus One Labs Proposal Is Ready',
       heading: 'Your proposal is ready!',
-      body: "Great news — we've reviewed your inquiry and prepared a proposal for your project. Log in to your dashboard to view the details and let us know if you have any questions.",
+      body: "Great news — we've reviewed your inquiry and put together a proposal for your project. Review the details below, then log in to your dashboard to accept or ask questions.",
       cta: { label: 'View My Dashboard', url: `${SITE}/login` },
     },
     accepted: {
@@ -77,6 +89,8 @@ async function sendStatusEmail(opts: {
     body: cfg.body,
     cta: cfg.cta,
     note: adminNote,
+    proposal: status === 'proposal_sent' ? proposalText : undefined,
+    tier: priceTier || undefined,
   });
 
   await fetch('https://api.resend.com/emails', {
@@ -116,27 +130,49 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
   if (!session || session.role !== 'admin') {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
-  const body = await request.json() as { id: string; status: string; admin_note?: string };
+  const body = await request.json() as {
+    id: string;
+    status?: string;
+    admin_note?: string;
+    proposal_text?: string;
+    price_tier?: string;
+  };
 
-  await db.prepare(
-    `UPDATE quotes SET status = ?, admin_note = ?, updated_at = datetime('now') WHERE id = ?`
-  ).bind(body.status, body.admin_note ?? null, body.id).run();
+  // Save proposal text / tier independently (no status change required)
+  if (body.proposal_text !== undefined || body.price_tier !== undefined) {
+    await db.prepare(
+      `UPDATE quotes SET
+        proposal_text = COALESCE(?, proposal_text),
+        price_tier = COALESCE(?, price_tier),
+        updated_at = datetime('now')
+       WHERE id = ?`
+    ).bind(body.proposal_text ?? null, body.price_tier ?? null, body.id).run();
+  }
 
-  // Send status-change email to client for key milestones
-  const resendApiKey = env.RESEND_API_KEY;
-  if (resendApiKey && ['proposal_sent', 'accepted', 'launched'].includes(body.status)) {
-    const quote = await db.prepare(
-      `SELECT name, email FROM quotes WHERE id = ?`
-    ).bind(body.id).first() as { name: string; email: string } | null;
+  // Update status + admin note if provided
+  if (body.status !== undefined) {
+    await db.prepare(
+      `UPDATE quotes SET status = ?, admin_note = ?, updated_at = datetime('now') WHERE id = ?`
+    ).bind(body.status, body.admin_note ?? null, body.id).run();
 
-    if (quote?.email) {
-      await sendStatusEmail({
-        resendApiKey,
-        to: quote.email,
-        name: quote.name || 'there',
-        status: body.status,
-        adminNote: body.admin_note || undefined,
-      });
+    // Send status-change email to client for key milestones
+    const resendApiKey = env.RESEND_API_KEY;
+    if (resendApiKey && ['proposal_sent', 'accepted', 'launched'].includes(body.status)) {
+      const quote = await db.prepare(
+        `SELECT name, email, proposal_text, price_tier FROM quotes WHERE id = ?`
+      ).bind(body.id).first() as { name: string; email: string; proposal_text?: string; price_tier?: string } | null;
+
+      if (quote?.email) {
+        await sendStatusEmail({
+          resendApiKey,
+          to: quote.email,
+          name: quote.name || 'there',
+          status: body.status,
+          adminNote: body.admin_note || undefined,
+          proposalText: quote.proposal_text || undefined,
+          priceTier: quote.price_tier || undefined,
+        });
+      }
     }
   }
 

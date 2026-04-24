@@ -103,13 +103,35 @@ const statusColor: Record<string, string> = {
                 </div>
               )}
 
+              {/* Proposal */}
+              <div class="mb-4">
+                <label class="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Proposal (visible to client in dashboard)</label>
+                <textarea
+                  class="proposal-input w-full bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white placeholder-zinc-600 resize-none"
+                  rows="4"
+                  placeholder="Scope of work, deliverables, timeline, pricing details..."
+                >{q.proposal_text ?? ''}</textarea>
+                <div class="flex items-center gap-3 mt-2">
+                  <select
+                    class="tier-select bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-lg px-3 py-2 text-sm outline-none text-white"
+                  >
+                    <option value="" selected={!q.price_tier}>Select tier...</option>
+                    <option value="basic" selected={q.price_tier === 'basic'}>Basic — $500</option>
+                    <option value="standard" selected={q.price_tier === 'standard'}>Standard — $1,500</option>
+                    <option value="premium" selected={q.price_tier === 'premium'}>Premium — $3,000</option>
+                  </select>
+                  <button class="save-proposal-btn text-xs bg-[#1a3a66] hover:bg-[#1e4070] border border-white/20 px-4 py-2 rounded-lg transition">Save Proposal</button>
+                  {q.proposal_text && <span class="text-xs text-green-400">✓ Proposal saved</span>}
+                </div>
+              </div>
+
               {/* Admin controls */}
               <div class="flex flex-wrap gap-3 items-end">
                 <div class="flex-1 min-w-48">
                   <textarea
                     class="note-input w-full bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white placeholder-zinc-500 resize-none"
                     rows="2"
-                    placeholder="Note to client (optional)"
+                    placeholder="Note to client (optional — included in status email)"
                   >{q.admin_note ?? ''}</textarea>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -181,6 +203,26 @@ const statusColor: Record<string, string> = {
         };
       });
     });
+
+    const saveProposalBtn = card.querySelector<HTMLButtonElement>('.save-proposal-btn');
+    if (saveProposalBtn) {
+      saveProposalBtn.addEventListener('click', async () => {
+        const proposal = (card.querySelector('.proposal-input') as HTMLTextAreaElement).value;
+        const tier = (card.querySelector('.tier-select') as HTMLSelectElement).value;
+        saveProposalBtn.textContent = 'Saving...';
+        saveProposalBtn.disabled = true;
+        await fetch('/api/admin/quotes', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, proposal_text: proposal, price_tier: tier || null }),
+        });
+        saveProposalBtn.textContent = '✓ Saved!';
+        setTimeout(() => {
+          saveProposalBtn.textContent = 'Save Proposal';
+          saveProposalBtn.disabled = false;
+        }, 2500);
+      });
+    }
 
     const linkBtn = card.querySelector<HTMLButtonElement>('.send-link-btn');
     if (linkBtn) {

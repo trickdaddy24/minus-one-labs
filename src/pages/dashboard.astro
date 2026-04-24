@@ -4,7 +4,7 @@ import Layout from '../layouts/Layout.astro';
 const session = (Astro.locals as any).session;
 const db = (Astro.locals as any).runtime?.env?.DB;
 
-// Get all quotes for this user's email
+// Quotes for this user
 const { results: quotes } = await db.prepare(
   `SELECT q.*, qn.submitted_at as questionnaire_submitted
    FROM quotes q
@@ -13,79 +13,318 @@ const { results: quotes } = await db.prepare(
    ORDER BY q.created_at DESC`
 ).bind(session.email).all();
 
+// User info
+const user = await db.prepare(
+  `SELECT id, email, created_at, display_mode FROM users WHERE email = ?`
+).bind(session.email).first() as { id: string; email: string; created_at: string; display_mode: string | null } | null;
+
+// Site default display mode
+const siteSetting = await db.prepare(
+  `SELECT value FROM site_settings WHERE key = 'default_display_mode'`
+).first() as { value: string } | null;
+
+const userTheme = user?.display_mode ?? siteSetting?.value ?? 'dark';
+const isLight = userTheme === 'light';
+
+// Unlock account features once any quote is accepted
+const hasAccepted = (quotes as any[]).some(q => ['accepted', 'launched'].includes(q.status));
+
+// Active subscription = accepted/launched quote with a tier set
+const activeSub = (quotes as any[]).find(q => ['accepted', 'launched'].includes(q.status) && q.price_tier);
+
+const TIER_LABELS: Record<string, string> = { basic: 'Basic', standard: 'Standard', premium: 'Premium' };
+const TIER_PRICES: Record<string, string> = { basic: '$500', standard: '$1,500', premium: '$3,000' };
+
 const statusLabel: Record<string, string> = {
   pending: 'Pending Review',
   proposal_sent: 'Proposal Sent',
   accepted: 'Accepted',
   launched: 'Launched 🚀',
 };
-
 const statusColor: Record<string, string> = {
   pending: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
   proposal_sent: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
   accepted: 'bg-green-500/20 text-green-300 border-green-500/30',
   launched: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
 };
+
+const bg       = isLight ? 'bg-slate-100'           : 'bg-[#0a2540]';
+const cardBg   = isLight ? 'bg-white border-slate-200' : 'bg-[#1a3a66] border-white/10';
+const innerBg  = isLight ? 'bg-slate-50 border border-slate-200' : 'bg-[#0a2540]';
+const inputCls = isLight
+  ? 'bg-slate-50 border-slate-200 focus:border-[#635bff] text-slate-900 placeholder-slate-400'
+  : 'bg-[#0a2540] border-white/10 focus:border-[#635bff] text-white placeholder-zinc-600';
+const labelCls = isLight ? 'text-slate-500' : 'text-zinc-400';
+const valueCls = isLight ? 'text-slate-800' : 'text-zinc-200';
+const headCls  = isLight ? 'text-slate-900' : 'text-white';
+const mutedCls = isLight ? 'text-slate-400' : 'text-zinc-600';
+const borderCls = isLight ? 'border-slate-200' : 'border-white/10';
 ---
 
 <Layout title="My Dashboard — Minus One Labs">
-  <div class="min-h-screen bg-[#0a2540] px-6 py-12">
+  <div class={`min-h-screen px-6 py-12 ${bg}`}>
     <div class="max-w-3xl mx-auto">
 
-      <div class="flex items-center justify-between mb-10">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-8">
         <div>
-          <h1 class="text-3xl font-heading font-semibold">My Dashboard</h1>
-          <p class="text-zinc-400 text-sm mt-1">{session.email}</p>
+          <h1 class={`text-2xl font-heading font-semibold ${headCls}`}>My Dashboard</h1>
+          <p class={`text-sm mt-0.5 ${labelCls}`}>{session.email}</p>
         </div>
         <form method="POST" action="/api/auth/logout">
-          <button class="text-sm text-zinc-400 hover:text-white border border-white/20 px-4 py-2 rounded-xl transition">
+          <button class={`text-sm px-4 py-2 rounded-xl border transition ${isLight ? 'border-slate-300 text-slate-600 hover:text-slate-900' : 'border-white/20 text-zinc-400 hover:text-white'}`}>
             Sign out
           </button>
         </form>
       </div>
 
-      {quotes.length === 0 ? (
-        <div class="bg-[#1a3a66] rounded-3xl p-10 text-center">
-          <p class="text-zinc-300 mb-4">No quotes yet. Submit an inquiry from the home page to get started.</p>
-          <a href="/#contact" class="bg-[#635bff] hover:bg-[#7e6bfd] px-6 py-3 rounded-2xl font-semibold text-sm transition">
-            Request a Quote
-          </a>
-        </div>
-      ) : (
-        <div class="space-y-6">
-          {quotes.map((q: any) => (
-            <div class="bg-[#1a3a66] border border-white/10 rounded-3xl p-6">
-              <div class="flex items-start justify-between gap-4 mb-4">
-                <div>
-                  <h2 class="font-semibold text-lg">{q.company || q.name}</h2>
-                  <p class="text-zinc-400 text-xs mt-1">Submitted {new Date(q.created_at).toLocaleDateString()}</p>
+      <!-- Tabs -->
+      <div class={`flex gap-1 mb-8 border-b pb-0 ${borderCls}`}>
+        {['My Quotes', 'My Account'].map((tab, i) => (
+          <button
+            data-tab={i}
+            class={`dash-tab px-5 py-3 text-sm font-medium border-b-2 transition -mb-px ${i === 0 ? 'border-[#635bff] text-[#635bff]' : `border-transparent ${labelCls}`}`}
+          >{tab}</button>
+        ))}
+      </div>
+
+      <!-- ── Tab 0: My Quotes ── -->
+      <div id="dash-tab-0" class="dash-panel">
+        {quotes.length === 0 ? (
+          <div class={`border rounded-3xl p-10 text-center ${cardBg}`}>
+            <p class={`mb-4 ${labelCls}`}>No quotes yet. Submit an inquiry from the home page to get started.</p>
+            <a href="/#contact" class="bg-[#635bff] hover:bg-[#7e6bfd] text-white px-6 py-3 rounded-2xl font-semibold text-sm transition inline-block">
+              Request a Quote
+            </a>
+          </div>
+        ) : (
+          <div class="space-y-6">
+            {(quotes as any[]).map((q) => (
+              <div class={`border rounded-3xl p-6 ${cardBg}`}>
+                <div class="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <h2 class={`font-semibold text-lg ${headCls}`}>{q.company || q.name}</h2>
+                    <p class={`text-xs mt-1 ${labelCls}`}>Submitted {new Date(q.created_at).toLocaleDateString()}</p>
+                  </div>
+                  <span class={`text-xs font-medium px-3 py-1 rounded-full border ${statusColor[q.status] ?? 'bg-white/10 text-white'}`}>
+                    {statusLabel[q.status] ?? q.status}
+                  </span>
                 </div>
-                <span class={`text-xs font-medium px-3 py-1 rounded-full border ${statusColor[q.status] ?? 'bg-white/10 text-white'}`}>
-                  {statusLabel[q.status] ?? q.status}
-                </span>
+
+                {/* Proposal block */}
+                {q.proposal_text && (
+                  <div class={`rounded-2xl p-4 mb-4 ${innerBg}`}>
+                    <span class={`text-xs uppercase tracking-wider font-medium block mb-2 ${mutedCls}`}>Your Proposal</span>
+                    {q.price_tier && (
+                      <div class="inline-flex items-center gap-1.5 bg-[#635bff]/20 text-[#a5a0ff] text-xs font-semibold px-3 py-1 rounded-full mb-3">
+                        {TIER_LABELS[q.price_tier]} Plan · {TIER_PRICES[q.price_tier]}
+                      </div>
+                    )}
+                    <p class={`text-sm leading-relaxed whitespace-pre-wrap ${valueCls}`}>{q.proposal_text}</p>
+                  </div>
+                )}
+
+                {/* Admin note */}
+                {q.admin_note && (
+                  <div class={`rounded-2xl p-4 mb-4 text-sm ${innerBg} ${valueCls}`}>
+                    <span class={`text-xs block mb-1 ${mutedCls}`}>Note from the team:</span>
+                    {q.admin_note}
+                  </div>
+                )}
+
+                {q.status === 'accepted' && !q.questionnaire_submitted && (
+                  <a href={`/questionnaire?quote_id=${q.id}`}
+                    class="inline-block bg-[#635bff] hover:bg-[#7e6bfd] text-white px-5 py-2 rounded-xl text-sm font-semibold transition">
+                    Fill Out Questionnaire →
+                  </a>
+                )}
+                {q.questionnaire_submitted && (
+                  <p class="text-green-400 text-sm">✓ Questionnaire submitted — we're building your site!</p>
+                )}
               </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-              {q.admin_note && (
-                <div class="bg-[#0a2540] rounded-2xl p-4 mb-4 text-sm text-zinc-300">
-                  <span class="text-zinc-500 text-xs block mb-1">Note from the lab:</span>
-                  {q.admin_note}
-                </div>
-              )}
+      <!-- ── Tab 1: My Account ── -->
+      <div id="dash-tab-1" class="dash-panel hidden space-y-5">
 
-              {q.status === 'accepted' && !q.questionnaire_submitted && (
-                <a href={`/questionnaire?quote_id=${q.id}`}
-                  class="inline-block bg-[#635bff] hover:bg-[#7e6bfd] px-5 py-2 rounded-xl text-sm font-semibold transition">
-                  Fill Out Questionnaire →
-                </a>
-              )}
-
-              {q.questionnaire_submitted && (
-                <p class="text-green-400 text-sm">✓ Questionnaire submitted — we're on it!</p>
-              )}
+        <!-- Preferences -->
+        <div class={`border rounded-2xl p-6 ${cardBg}`}>
+          <h2 class={`font-semibold text-base mb-4 ${headCls}`}>Preferences</h2>
+          <div class="flex items-center justify-between">
+            <span class={`text-sm ${labelCls}`}>Display mode</span>
+            <div class="flex gap-2">
+              <button class={`theme-btn text-xs px-4 py-2 rounded-lg border transition ${!isLight ? 'bg-[#635bff] border-[#635bff] text-white' : `border-slate-300 ${labelCls}`}`} data-mode="dark">Dark</button>
+              <button class={`theme-btn text-xs px-4 py-2 rounded-lg border transition ${isLight ? 'bg-[#635bff] border-[#635bff] text-white' : 'border-white/20 text-zinc-400 hover:border-white/40'}`} data-mode="light">Light</button>
             </div>
-          ))}
+          </div>
         </div>
-      )}
+
+        <!-- User Information -->
+        <div class={`border rounded-2xl p-6 ${cardBg}`}>
+          <h2 class={`font-semibold text-base mb-4 ${headCls}`}>User Information</h2>
+          <div class="space-y-3 mb-5">
+            <div class="flex justify-between text-sm">
+              <span class={labelCls}>Email</span>
+              <span class={valueCls}>{session.email}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class={labelCls}>Member since</span>
+              <span class={valueCls}>{user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'}</span>
+            </div>
+          </div>
+
+          {hasAccepted ? (
+            <div>
+              <p class={`text-xs mb-3 ${mutedCls}`}>Set a password for your account (optional — magic link always works).</p>
+              <div class="space-y-2">
+                <input id="newPassword" type="password" placeholder="New password (min 8 chars)"
+                  class={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition ${inputCls}`} />
+                <input id="confirmPassword" type="password" placeholder="Confirm password"
+                  class={`w-full border rounded-xl px-4 py-2.5 text-sm outline-none transition ${inputCls}`} />
+                <div class="flex items-center gap-3 pt-1">
+                  <button id="savePasswordBtn" class="bg-[#635bff] hover:bg-[#7e6bfd] text-white text-sm px-4 py-2 rounded-xl transition font-medium">Update Password</button>
+                  <span id="passwordMsg" class="text-xs hidden"></span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p class={`text-xs ${mutedCls}`}>Password management is available once your proposal is accepted.</p>
+          )}
+        </div>
+
+        <!-- Manage Subscription -->
+        <div class={`border rounded-2xl p-6 ${cardBg}`}>
+          <h2 class={`font-semibold text-base mb-4 ${headCls}`}>Manage Subscription</h2>
+          {activeSub ? (
+            <div class="space-y-3">
+              <div class="flex justify-between text-sm">
+                <span class={labelCls}>Status</span>
+                <span class="bg-green-500/20 text-green-300 text-xs font-semibold px-3 py-1 rounded-full">Active</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class={labelCls}>Plan</span>
+                <span class={valueCls}>{TIER_LABELS[activeSub.price_tier] ?? activeSub.price_tier}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class={labelCls}>One-time fee</span>
+                <span class={valueCls}>{TIER_PRICES[activeSub.price_tier] ?? '—'}</span>
+              </div>
+            </div>
+          ) : (
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="bg-zinc-500/20 text-zinc-400 text-xs font-semibold px-3 py-1 rounded-full">No active subscription</span>
+              <span class={`text-xs ${mutedCls}`}>A plan will appear here once your proposal is accepted.</span>
+            </div>
+          )}
+        </div>
+
+        <!-- Get Support -->
+        <div class={`border rounded-2xl p-6 ${cardBg}`}>
+          <h2 class={`font-semibold text-base mb-1 ${headCls}`}>Get Support</h2>
+          <p class={`text-sm mb-4 ${labelCls}`}>Here's how to get support:</p>
+          <ul class="space-y-4">
+            <li class="flex items-start gap-3">
+              <span class="text-[#635bff] text-base mt-0.5">✉</span>
+              <div>
+                <p class={`text-sm ${valueCls}`}>Send an email to <a href="mailto:support@minus-one-labs.com" class="text-[#635bff] hover:underline">support@minus-one-labs.com</a></p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="text-[#635bff] text-base mt-0.5">💬</span>
+              <div>
+                <p class={`text-sm ${valueCls}`}>Send a message via the <a href="/#contact" class="text-[#635bff] hover:underline">contact form</a></p>
+                <p class={`text-xs mt-0.5 ${mutedCls}`}>We'll be notified instantly via Telegram and Pushover.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+      </div>
     </div>
   </div>
 </Layout>
+
+<script>
+  const isLight = document.querySelector('.min-h-screen')?.classList.contains('bg-slate-100') ?? false;
+
+  // Tab switching
+  document.querySelectorAll('.dash-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = btn.getAttribute('data-tab');
+      document.querySelectorAll('.dash-panel').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.dash-tab').forEach(b => {
+        b.classList.remove('border-[#635bff]', 'text-[#635bff]');
+        b.classList.add('border-transparent');
+      });
+      document.getElementById(`dash-tab-${i}`)!.classList.remove('hidden');
+      btn.classList.add('border-[#635bff]', 'text-[#635bff]');
+      btn.classList.remove('border-transparent');
+    });
+  });
+
+  // Theme toggle
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const mode = (btn as HTMLElement).dataset.mode!;
+      await fetch('/api/user/account', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ display_mode: mode }),
+      });
+      location.reload();
+    });
+  });
+
+  // Password update
+  const savePasswordBtn = document.getElementById('savePasswordBtn');
+  if (savePasswordBtn) {
+    savePasswordBtn.addEventListener('click', async () => {
+      const newPw = (document.getElementById('newPassword') as HTMLInputElement).value;
+      const confirmPw = (document.getElementById('confirmPassword') as HTMLInputElement).value;
+      const msg = document.getElementById('passwordMsg')!;
+
+      msg.className = 'text-xs hidden';
+
+      if (!newPw || !confirmPw) {
+        msg.textContent = 'Please fill in both fields.';
+        msg.className = 'text-xs text-red-400';
+        return;
+      }
+      if (newPw !== confirmPw) {
+        msg.textContent = 'Passwords do not match.';
+        msg.className = 'text-xs text-red-400';
+        return;
+      }
+      if (newPw.length < 8) {
+        msg.textContent = 'Minimum 8 characters.';
+        msg.className = 'text-xs text-red-400';
+        return;
+      }
+
+      (savePasswordBtn as HTMLButtonElement).textContent = 'Saving...';
+      (savePasswordBtn as HTMLButtonElement).disabled = true;
+
+      const res = await fetch('/api/user/account', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ new_password: newPw }),
+      });
+
+      if (res.ok) {
+        msg.textContent = '✓ Password updated.';
+        msg.className = 'text-xs text-green-400';
+        (document.getElementById('newPassword') as HTMLInputElement).value = '';
+        (document.getElementById('confirmPassword') as HTMLInputElement).value = '';
+      } else {
+        const err = await res.json() as { error?: string };
+        msg.textContent = err.error ?? 'Something went wrong.';
+        msg.className = 'text-xs text-red-400';
+      }
+      (savePasswordBtn as HTMLButtonElement).textContent = 'Update Password';
+      (savePasswordBtn as HTMLButtonElement).disabled = false;
+    });
+  }
+</script>

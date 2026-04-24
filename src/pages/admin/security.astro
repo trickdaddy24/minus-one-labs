@@ -46,6 +46,7 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
           { key: 'rate_limit_window_minutes', label: 'Rate limit window (minutes)', type: 'number' },
           { key: 'inactivity_timeout_minutes', label: 'Inactivity timeout (minutes)', type: 'number' },
           { key: 'registration_open', label: 'Registration open (1=yes, 0=no)', type: 'number' },
+          { key: 'default_display_mode', label: 'Default display mode for clients (dark / light)', type: 'text' },
         ].map(s => (
           <div class="flex items-center gap-4 bg-[#0f1f35] border border-white/10 rounded-xl px-6 py-4">
             <label class="flex-1 text-sm text-zinc-300">{s.label}</label>
@@ -53,7 +54,7 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
               type={s.type}
               data-key={s.key}
               value={settingsMap[s.key] ?? ''}
-              class="setting-input w-24 bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-lg px-3 py-2 text-sm outline-none text-white text-center"
+              class={`setting-input bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-lg px-3 py-2 text-sm outline-none text-white text-center ${s.type === 'text' ? 'w-28' : 'w-24'}`}
             />
             <button data-key={s.key} class="save-setting text-xs bg-[#635bff] hover:bg-[#7e6bfd] px-4 py-2 rounded-lg transition">Save</button>
           </div>
