@@ -132,6 +132,21 @@ const borderCls = isLight ? 'border-slate-200' : 'border-white/10';
                   </div>
                 )}
 
+                {/* Accept proposal CTA */}
+                {q.status === 'proposal_sent' && q.proposal_text && (
+                  <div class={`rounded-2xl p-4 mb-4 border ${isLight ? 'bg-blue-50 border-blue-200' : 'bg-blue-500/10 border-blue-500/30'}`}>
+                    <p class={`text-sm mb-3 ${isLight ? 'text-slate-700' : 'text-zinc-200'}`}>
+                      Ready to move forward? Accept the proposal to lock in your plan and unlock the project questionnaire.
+                    </p>
+                    <button
+                      data-accept-id={q.id}
+                      class="accept-proposal-btn bg-[#635bff] hover:bg-[#7e6bfd] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition"
+                    >
+                      Accept Proposal →
+                    </button>
+                  </div>
+                )}
+
                 {q.status === 'accepted' && !q.questionnaire_submitted && (
                   <a href={`/questionnaire?quote_id=${q.id}`}
                     class="inline-block bg-[#635bff] hover:bg-[#7e6bfd] text-white px-5 py-2 rounded-xl text-sm font-semibold transition">
@@ -249,6 +264,28 @@ const borderCls = isLight ? 'border-slate-200' : 'border-white/10';
 
 <script>
   const isLight = document.querySelector('.min-h-screen')?.classList.contains('bg-slate-100') ?? false;
+
+  // Accept proposal
+  document.querySelectorAll('.accept-proposal-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Accept this proposal? This will lock in your plan and unlock the project questionnaire.')) return;
+      const quoteId = (btn as HTMLElement).dataset.acceptId!;
+      (btn as HTMLButtonElement).disabled = true;
+      (btn as HTMLButtonElement).textContent = 'Accepting...';
+      const res = await fetch('/api/quotes/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quote_id: quoteId }),
+      });
+      if (res.ok) {
+        location.reload();
+      } else {
+        alert('Something went wrong. Please try again or contact support.');
+        (btn as HTMLButtonElement).disabled = false;
+        (btn as HTMLButtonElement).textContent = 'Accept Proposal →';
+      }
+    });
+  });
 
   // Tab switching
   document.querySelectorAll('.dash-tab').forEach(btn => {
