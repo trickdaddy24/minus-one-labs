@@ -42,23 +42,59 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
       <!-- Settings tab -->
       <div id="tab-0" class="tab-panel space-y-4">
         {[
-          { key: 'rate_limit_attempts', label: 'Max login attempts before block', type: 'number' },
-          { key: 'rate_limit_window_minutes', label: 'Rate limit window (minutes)', type: 'number' },
-          { key: 'inactivity_timeout_minutes', label: 'Inactivity timeout (minutes)', type: 'number' },
-          { key: 'registration_open', label: 'Registration open (1=yes, 0=no)', type: 'number' },
-          { key: 'default_display_mode', label: 'Default display mode for clients (dark / light)', type: 'text' },
+          { key: 'rate_limit_attempts', label: 'Max login attempts before block' },
+          { key: 'rate_limit_window_minutes', label: 'Rate limit window (minutes)' },
+          { key: 'inactivity_timeout_minutes', label: 'Inactivity timeout (minutes)' },
         ].map(s => (
           <div class="flex items-center gap-4 bg-[#0f1f35] border border-white/10 rounded-xl px-6 py-4">
             <label class="flex-1 text-sm text-zinc-300">{s.label}</label>
             <input
-              type={s.type}
+              type="number"
               data-key={s.key}
               value={settingsMap[s.key] ?? ''}
-              class={`setting-input bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-lg px-3 py-2 text-sm outline-none text-white text-center ${s.type === 'text' ? 'w-28' : 'w-24'}`}
+              class="setting-input bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-lg px-3 py-2 text-sm outline-none text-white text-center w-24"
             />
             <button data-key={s.key} class="save-setting text-xs bg-[#635bff] hover:bg-[#7e6bfd] px-4 py-2 rounded-lg transition">Save</button>
           </div>
         ))}
+
+        <!-- Registration open toggle -->
+        <div class="flex items-center gap-4 bg-[#0f1f35] border border-white/10 rounded-xl px-6 py-4">
+          <div class="flex-1">
+            <p class="text-sm text-zinc-300">Registration open</p>
+            <p class="text-xs text-zinc-500 mt-0.5">Allow new clients to submit inquiry forms</p>
+          </div>
+          <button
+            id="toggle-registration"
+            data-value={settingsMap['registration_open'] ?? '1'}
+            class="relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none"
+          >
+            <span class="sr-only">Toggle registration</span>
+            <span id="reg-track" class={`absolute inset-0 rounded-full transition-colors ${(settingsMap['registration_open'] ?? '1') === '1' ? 'bg-[#635bff]' : 'bg-zinc-700'}`}></span>
+            <span id="reg-thumb" class={`relative inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${(settingsMap['registration_open'] ?? '1') === '1' ? 'translate-x-6' : 'translate-x-1'}`}></span>
+          </button>
+          <span id="reg-label" class={`text-xs font-medium w-6 ${(settingsMap['registration_open'] ?? '1') === '1' ? 'text-green-300' : 'text-zinc-500'}`}>
+            {(settingsMap['registration_open'] ?? '1') === '1' ? 'On' : 'Off'}
+          </span>
+        </div>
+
+        <!-- Default display mode toggle -->
+        <div class="flex items-center gap-4 bg-[#0f1f35] border border-white/10 rounded-xl px-6 py-4">
+          <div class="flex-1">
+            <p class="text-sm text-zinc-300">Default display mode for clients</p>
+            <p class="text-xs text-zinc-500 mt-0.5">Applied when a client hasn't set their own preference</p>
+          </div>
+          <div class="flex bg-[#060f1a] border border-white/10 rounded-lg p-0.5 gap-0.5">
+            <button
+              data-mode="dark"
+              class={`mode-btn px-4 py-1.5 rounded-md text-xs font-medium transition ${(settingsMap['default_display_mode'] ?? 'dark') === 'dark' ? 'bg-[#635bff] text-white' : 'text-zinc-400 hover:text-white'}`}
+            >Dark</button>
+            <button
+              data-mode="light"
+              class={`mode-btn px-4 py-1.5 rounded-md text-xs font-medium transition ${(settingsMap['default_display_mode'] ?? 'dark') === 'light' ? 'bg-[#635bff] text-white' : 'text-zinc-400 hover:text-white'}`}
+            >Light</button>
+          </div>
+        </div>
       </div>
 
       <!-- Promo Codes tab -->
@@ -238,6 +274,39 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
         body: JSON.stringify({ id }),
       });
       location.reload();
+    });
+  });
+
+  // Registration open toggle
+  const regToggle = document.getElementById('toggle-registration')!;
+  regToggle.addEventListener('click', async () => {
+    const current = regToggle.dataset.value!;
+    const next = current === '1' ? '0' : '1';
+    regToggle.dataset.value = next;
+    const track = document.getElementById('reg-track')!;
+    const thumb = document.getElementById('reg-thumb')!;
+    const label = document.getElementById('reg-label')!;
+    track.className = `absolute inset-0 rounded-full transition-colors ${next === '1' ? 'bg-[#635bff]' : 'bg-zinc-700'}`;
+    thumb.className = `relative inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${next === '1' ? 'translate-x-6' : 'translate-x-1'}`;
+    label.textContent = next === '1' ? 'On' : 'Off';
+    label.className = `text-xs font-medium w-6 ${next === '1' ? 'text-green-300' : 'text-zinc-500'}`;
+    await fetch('/api/admin/security', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update_setting', key: 'registration_open', value: next }),
+    });
+  });
+
+  // Default display mode toggle
+  document.querySelectorAll<HTMLButtonElement>('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const mode = btn.dataset.mode!;
+      document.querySelectorAll<HTMLButtonElement>('.mode-btn').forEach(b => {
+        b.className = `mode-btn px-4 py-1.5 rounded-md text-xs font-medium transition ${b.dataset.mode === mode ? 'bg-[#635bff] text-white' : 'text-zinc-400 hover:text-white'}`;
+      });
+      await fetch('/api/admin/security', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_setting', key: 'default_display_mode', value: mode }),
+      });
     });
   });
 

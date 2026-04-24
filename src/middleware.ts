@@ -34,7 +34,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       `INSERT INTO visitor_logs (user_id, ip, country, city, user_agent, page)
        VALUES (?, ?, ?, ?, ?, ?)`
     ).bind(
-      session.id,
+      session.user_id,
       clientIp,
       cf.country ?? null,
       cf.city ?? null,
