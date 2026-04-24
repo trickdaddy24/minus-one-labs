@@ -20,7 +20,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   if (body.action === 'update_setting') {
-    await db.prepare(`UPDATE site_settings SET value = ? WHERE key = ?`).bind(body.value, body.key).run();
+    await db.prepare(
+      `INSERT INTO site_settings (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`
+    ).bind(body.key, body.value).run();
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   }
 

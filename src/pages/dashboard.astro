@@ -403,12 +403,17 @@ const borderCls = isLight ? 'border-slate-200' : 'border-white/10';
   document.querySelectorAll('.theme-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const mode = (btn as HTMLElement).dataset.mode!;
-      await fetch('/api/user/account', {
+      const res = await fetch('/api/user/account', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ display_mode: mode }),
       });
-      location.reload();
+      if (res.ok) {
+        location.reload();
+      } else {
+        const err = await res.json().catch(() => ({})) as { error?: string };
+        alert(err.error ?? 'Failed to save display preference.');
+      }
     });
   });
 

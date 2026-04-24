@@ -16,6 +16,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   }
 
+  // Check registration_open setting
+  const db = (locals as any).runtime?.env?.DB;
+  if (db) {
+    const setting = await db.prepare(
+      `SELECT value FROM site_settings WHERE key = 'registration_open'`
+    ).first() as { value: string } | null;
+    if (setting && setting.value === '0') {
+      return new Response(JSON.stringify({ error: 'We are not accepting new inquiries at this time. Please check back soon.' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   const text = [
     '🧪 New Minus One Labs Inquiry',
     `Name: ${name}`,
@@ -105,7 +119,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   // Save quote to D1
-  const db = env.DB;
   if (db) {
     await db.prepare(
       `INSERT INTO users (email) VALUES (?) ON CONFLICT(email) DO NOTHING`
