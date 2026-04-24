@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { generateToken, expiresAt, sessionCookie, getClientIp } from '../../../lib/auth';
 
-export const GET: APIRoute = async ({ url, locals }) => {
+export const GET: APIRoute = async ({ url, locals, request }) => {
   const db = (locals as any).runtime?.env?.DB;
   const token = url.searchParams.get('token');
 
@@ -24,14 +24,19 @@ export const GET: APIRoute = async ({ url, locals }) => {
     return new Response(null, { status: 302, headers: { Location: '/login?error=ip_mismatch' } });
   }
 
-  // Mark login attempt as success
+  // Mark link used and log success
+  await db.prepare(`UPDATE magic_links SET used = 1 WHERE id = ?`).bind(link.id).run();
   await db.prepare(
     `UPDATE login_attempts SET success = 1 WHERE ip = ? AND email = ? AND success = 0`
-  ).bind(clientIp, link.email).run();
+  ).bind(clientIp, link.email).run().catch(() => {});
 
-  await db.prepare(`UPDATE magic_links SET used = 1 WHERE id = ?`).bind(link.id).run();
+  // Ensure user exists
+  await db.prepare(`INSERT INTO users (email) VALUES (?) ON CONFLICT(email) DO NOTHING`).bind(link.email).run();
+  const user = await db.prepare(`SELECT * FROM users WHERE email = ?`).bind(link.email).first() as any;
 
-  const user = await db.prepare(`SELECT * FROM users WHERE email = ?`).bind(link.email).first();
+  if (!user) {
+    return new Response(null, { status: 302, headers: { Location: '/login?error=invalid' } });
+  }
 
   const sessionToken = generateToken();
   const expires = expiresAt(60 * 24 * 7); // 7 days
