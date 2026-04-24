@@ -21,6 +21,7 @@ const counts = {
 const statusColor: Record<string, string> = {
   pending: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
   proposal_sent: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  proposal_rejected: 'bg-red-500/20 text-red-300 border-red-500/30',
   accepted: 'bg-green-500/20 text-green-300 border-green-500/30',
   launched: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
 };
@@ -135,12 +136,19 @@ const statusColor: Record<string, string> = {
                   >{q.admin_note ?? ''}</textarea>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                  {['pending','proposal_sent','accepted','launched'].map(s => (
+                  {q.status === 'proposal_rejected' && (
+                    <button
+                      class="resend-proposal-btn text-xs px-3 py-2 rounded-xl border border-orange-400/50 text-orange-300 hover:bg-orange-500/10 transition font-medium"
+                    >
+                      🔄 Resend Proposal
+                    </button>
+                  )}
+                  {['pending','proposal_sent','proposal_rejected','accepted','launched'].map(s => (
                     <button
                       data-status={s}
                       class={`status-btn text-xs px-3 py-2 rounded-xl border transition ${q.status === s ? 'bg-[#635bff] border-[#635bff] text-white' : 'border-white/20 text-zinc-400 hover:border-white/40'}`}
                     >
-                      {s.replace('_',' ')}
+                      {s.replace(/_/g,' ')}
                     </button>
                   ))}
                   <button
@@ -203,6 +211,36 @@ const statusColor: Record<string, string> = {
         };
       });
     });
+
+    const resendProposalBtn = card.querySelector<HTMLButtonElement>('.resend-proposal-btn');
+    if (resendProposalBtn) {
+      resendProposalBtn.addEventListener('click', async () => {
+        const proposal = (card.querySelector('.proposal-input') as HTMLTextAreaElement).value;
+        const tier = (card.querySelector('.tier-select') as HTMLSelectElement).value;
+        const email = card.querySelector<HTMLElement>('[data-email]')?.dataset.email ?? 'client';
+        const note = (card.querySelector('.note-input') as HTMLTextAreaElement).value;
+        if (!proposal.trim()) {
+          alert('Please write a proposal before resending.');
+          return;
+        }
+        if (!confirm(`Resend the updated proposal to ${email}?`)) return;
+        resendProposalBtn.textContent = 'Sending...';
+        resendProposalBtn.disabled = true;
+        // Save proposal + tier first, then set status to proposal_sent (sends email)
+        await fetch('/api/admin/quotes', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, proposal_text: proposal, price_tier: tier || null }),
+        });
+        await fetch('/api/admin/quotes', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status: 'proposal_sent', admin_note: note }),
+        });
+        resendProposalBtn.textContent = '✓ Sent!';
+        setTimeout(() => location.reload(), 1500);
+      });
+    }
 
     const saveProposalBtn = card.querySelector<HTMLButtonElement>('.save-proposal-btn');
     if (saveProposalBtn) {
