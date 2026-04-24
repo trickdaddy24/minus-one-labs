@@ -27,11 +27,14 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
   }
 
   if (body.new_password) {
-    if (body.new_password.length < 8) {
-      return new Response(JSON.stringify({ error: 'Password must be at least 8 characters' }), { status: 400 });
-    }
+    const pw = body.new_password;
+    if (pw.length < 8)           return new Response(JSON.stringify({ error: 'Password must be at least 8 characters.' }), { status: 400 });
+    if (!/[A-Z]/.test(pw))       return new Response(JSON.stringify({ error: 'Password must contain an uppercase letter.' }), { status: 400 });
+    if (!/[a-z]/.test(pw))       return new Response(JSON.stringify({ error: 'Password must contain a lowercase letter.' }), { status: 400 });
+    if (!/[0-9]/.test(pw))       return new Response(JSON.stringify({ error: 'Password must contain a number.' }), { status: 400 });
+    if (!/[^A-Za-z0-9]/.test(pw)) return new Response(JSON.stringify({ error: 'Password must contain a special character.' }), { status: 400 });
     updates.push('password_hash = ?');
-    binds.push(await hashPassword(body.new_password));
+    binds.push(await hashPassword(pw));
   }
 
   if (updates.length === 0) {
