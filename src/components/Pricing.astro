@@ -52,13 +52,53 @@ const tiers = [
     cta: 'Get Started',
   },
 ];
+
+const hostingTiers = [
+  {
+    name: 'Starter',
+    monthly: 6,
+    annual: 72,
+    pairedWith: 'Basic',
+    features: [
+      'Cloudflare Pages CDN',
+      'Free SSL certificate',
+      '99.9% uptime guarantee',
+      'Global edge network',
+    ],
+  },
+  {
+    name: 'Growth',
+    monthly: 12,
+    annual: 144,
+    pairedWith: 'Standard',
+    features: [
+      'Everything in Starter',
+      'Monthly performance report',
+      'Uptime monitoring alerts',
+      'Priority response time',
+    ],
+  },
+  {
+    name: 'Pro',
+    monthly: 24,
+    annual: 288,
+    pairedWith: 'Premium',
+    features: [
+      'Everything in Growth',
+      'Priority support channel',
+      'Quarterly review call',
+      'Site health dashboard',
+    ],
+  },
+];
 ---
 
 <section id="pricing" class="py-24 bg-[#0a2540]">
   <div class="max-w-7xl mx-auto px-6">
     <h2 class="text-5xl font-heading font-semibold text-center mb-4">Simple, transparent pricing</h2>
-    <p class="text-center text-zinc-400 mb-16">One-time fee. No monthly subscriptions. No surprises.</p>
+    <p class="text-center text-zinc-400 mb-16">One-time setup fee. Optional managed hosting add-on — billed annually.</p>
 
+    <!-- Build tiers -->
     <div class="grid md:grid-cols-3 gap-8">
       {tiers.map(tier => (
         <div class={`relative rounded-3xl p-8 flex flex-col ${
@@ -104,8 +144,62 @@ const tiers = [
       ))}
     </div>
 
-    <p class="text-center text-zinc-500 text-sm mt-10">
+    <p class="text-center text-zinc-500 text-sm mt-10 mb-20">
       Need something custom? <a href="/#contact" class="text-[#635bff] hover:underline">Let's talk</a> — we'll build a package around your business.
     </p>
+
+    <!-- Hosting add-on -->
+    <div class="border-t border-white/10 pt-16">
+      <div class="text-center mb-10">
+        <span class="inline-block bg-[#635bff]/20 text-[#a5a0ff] text-xs font-bold px-3 py-1 rounded-full tracking-wider mb-3">ADD-ON</span>
+        <h3 class="text-3xl font-heading font-semibold mb-3">Managed Hosting</h3>
+        <p class="text-zinc-400 text-sm max-w-lg mx-auto">
+          Keep your site live, fast, and maintained — we handle everything.
+          Hosting is optional; your site can also run on your own Cloudflare account at no cost.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        {hostingTiers.map(h => (
+          <div class="bg-[#0f1f35] border border-white/10 rounded-2xl p-6 flex flex-col">
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <h4 class="font-semibold text-base">{h.name}</h4>
+                <p class="text-zinc-500 text-xs mt-0.5">Pairs with {h.pairedWith} build</p>
+              </div>
+              <span class="text-xs bg-white/5 border border-white/10 px-2 py-1 rounded-lg text-zinc-400">Annual</span>
+            </div>
+
+            <div class="mb-5">
+              <div class="flex items-end gap-1">
+                <span class="text-3xl font-bold">${h.monthly}</span>
+                <span class="text-zinc-400 text-sm mb-1">/mo</span>
+              </div>
+              <p class="text-zinc-500 text-xs mt-1">Billed annually — ${h.annual}/yr</p>
+            </div>
+
+            <ul class="space-y-2 flex-1 mb-6">
+              {h.features.map(f => (
+                <li class="flex items-start gap-2 text-sm text-zinc-300">
+                  <svg class="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-[#635bff]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  {f}
+                </li>
+              ))}
+            </ul>
+
+            <a href="/#contact" class="block text-center py-3 rounded-xl text-sm font-semibold border border-white/20 hover:border-[#635bff] hover:text-[#635bff] transition text-zinc-300">
+              Add to project
+            </a>
+          </div>
+        ))}
+      </div>
+
+      <p class="text-center text-zinc-600 text-xs mt-8">
+        Hosting fees are collected annually. Cancel anytime — we'll migrate your site if needed.
+      </p>
+    </div>
+
   </div>
 </section>

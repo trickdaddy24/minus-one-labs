@@ -34,6 +34,9 @@ const activeSub = (quotes as any[]).find(q => ['accepted', 'launched'].includes(
 
 const TIER_LABELS: Record<string, string> = { basic: 'Basic', standard: 'Standard', premium: 'Premium' };
 const TIER_PRICES: Record<string, string> = { basic: '$500', standard: '$1,500', premium: '$3,000' };
+const HOSTING_LABELS: Record<string, string> = { starter: 'Starter', growth: 'Growth', pro: 'Pro' };
+const HOSTING_MONTHLY: Record<string, string> = { starter: '$6/mo', growth: '$12/mo', pro: '$24/mo' };
+const HOSTING_ANNUAL: Record<string, string>  = { starter: '$72/yr', growth: '$144/yr', pro: '$288/yr' };
 
 const statusLabel: Record<string, string> = {
   pending: 'Pending Review',
@@ -123,11 +126,18 @@ const borderCls = isLight ? 'border-slate-200' : 'border-white/10';
                 {q.proposal_text && (
                   <div class={`rounded-2xl p-4 mb-4 ${innerBg}`}>
                     <span class={`text-xs uppercase tracking-wider font-medium block mb-2 ${mutedCls}`}>Your Proposal</span>
-                    {q.price_tier && (
-                      <div class="inline-flex items-center gap-1.5 bg-[#635bff]/20 text-[#a5a0ff] text-xs font-semibold px-3 py-1 rounded-full mb-3">
-                        {TIER_LABELS[q.price_tier]} Plan · {TIER_PRICES[q.price_tier]}
-                      </div>
-                    )}
+                    <div class="flex flex-wrap gap-2 mb-3">
+                      {q.price_tier && (
+                        <div class="inline-flex items-center gap-1.5 bg-[#635bff]/20 text-[#a5a0ff] text-xs font-semibold px-3 py-1 rounded-full">
+                          {TIER_LABELS[q.price_tier]} Plan · {TIER_PRICES[q.price_tier]}
+                        </div>
+                      )}
+                      {q.hosting_tier && (
+                        <div class="inline-flex items-center gap-1.5 bg-teal-500/20 text-teal-300 text-xs font-semibold px-3 py-1 rounded-full">
+                          {HOSTING_LABELS[q.hosting_tier]} Hosting · {HOSTING_MONTHLY[q.hosting_tier]}
+                        </div>
+                      )}
+                    </div>
                     <p class={`text-sm leading-relaxed whitespace-pre-wrap ${valueCls}`}>{q.proposal_text}</p>
                   </div>
                 )}
@@ -274,6 +284,23 @@ const borderCls = isLight ? 'border-slate-200' : 'border-white/10';
                 <span class={labelCls}>One-time fee</span>
                 <span class={valueCls}>{TIER_PRICES[activeSub.price_tier] ?? '—'}</span>
               </div>
+              {activeSub.hosting_tier && (
+                <>
+                  <div class={`border-t pt-3 mt-1 ${borderCls}`}></div>
+                  <div class="flex justify-between text-sm">
+                    <span class={labelCls}>Hosting plan</span>
+                    <span class={valueCls}>{HOSTING_LABELS[activeSub.hosting_tier] ?? activeSub.hosting_tier}</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class={labelCls}>Monthly</span>
+                    <span class={valueCls}>{HOSTING_MONTHLY[activeSub.hosting_tier] ?? '—'}</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class={labelCls}>Billed annually</span>
+                    <span class={valueCls}>{HOSTING_ANNUAL[activeSub.hosting_tier] ?? '—'}</span>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <div class="flex flex-wrap items-center gap-3">

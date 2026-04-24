@@ -8,6 +8,12 @@ const TIER_LABELS: Record<string, string> = {
   premium: 'Premium — $3,000',
 };
 
+const HOSTING_LABELS: Record<string, string> = {
+  starter: 'Starter — $6/mo (billed annually, $72/yr)',
+  growth:  'Growth — $12/mo (billed annually, $144/yr)',
+  pro:     'Pro — $24/mo (billed annually, $288/yr)',
+};
+
 function buildEmailHtml(opts: {
   name: string;
   heading: string;
@@ -16,6 +22,7 @@ function buildEmailHtml(opts: {
   note?: string;
   proposal?: string;
   tier?: string;
+  hostingTier?: string;
 }): string {
   return `<!DOCTYPE html>
 <html>
@@ -32,7 +39,7 @@ function buildEmailHtml(opts: {
           <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#fff;">${opts.heading}</h2>
           <p style="margin:0 0 12px;color:#94a3b8;font-size:15px;line-height:1.6;">Hi ${opts.name},</p>
           <p style="margin:0 0 24px;color:#cbd5e1;font-size:15px;line-height:1.6;">${opts.body}</p>
-          ${opts.tier ? `<div style="background:#635bff22;border:1px solid #635bff44;border-radius:10px;padding:12px 20px;margin-bottom:24px;"><span style="color:#a5a0ff;font-size:13px;font-weight:600;">Selected Plan: ${TIER_LABELS[opts.tier] ?? opts.tier}</span></div>` : ''}
+          ${opts.tier || opts.hostingTier ? `<div style="background:#635bff22;border:1px solid #635bff44;border-radius:10px;padding:12px 20px;margin-bottom:24px;">${opts.tier ? `<div style="color:#a5a0ff;font-size:13px;font-weight:600;margin-bottom:${opts.hostingTier ? '8px' : '0'};">Build Plan: ${TIER_LABELS[opts.tier] ?? opts.tier}</div>` : ''}${opts.hostingTier ? `<div style="color:#a5a0ff;font-size:13px;font-weight:600;">Hosting Add-on: ${HOSTING_LABELS[opts.hostingTier] ?? opts.hostingTier}</div>` : ''}</div>` : ''}
           ${opts.proposal ? `<div style="background:#060f1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:20px;margin-bottom:24px;"><strong style="color:#e2e8f0;font-size:14px;display:block;margin-bottom:10px;">Your Proposal:</strong><div style="color:#94a3b8;font-size:14px;line-height:1.7;white-space:pre-wrap;">${opts.proposal}</div></div>` : ''}
           ${opts.note ? `<div style="background:#060f1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:16px 20px;margin-bottom:24px;color:#94a3b8;font-size:14px;line-height:1.5;"><strong style="color:#e2e8f0;">Note from our team:</strong><br>${opts.note}</div>` : ''}
           ${opts.cta ? `<a href="${opts.cta.url}" style="display:inline-block;background:#635bff;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;">${opts.cta.label}</a>` : ''}
@@ -56,8 +63,9 @@ async function sendStatusEmail(opts: {
   adminNote?: string;
   proposalText?: string;
   priceTier?: string;
+  hostingTier?: string;
 }) {
-  const { to, name, status, adminNote, proposalText, priceTier, resendApiKey } = opts;
+  const { to, name, status, adminNote, proposalText, priceTier, hostingTier, resendApiKey } = opts;
 
   const configs: Record<string, { subject: string; heading: string; body: string; cta?: { label: string; url: string } }> = {
     proposal_sent: {
@@ -91,6 +99,7 @@ async function sendStatusEmail(opts: {
     note: adminNote,
     proposal: status === 'proposal_sent' ? proposalText : undefined,
     tier: priceTier || undefined,
+    hostingTier: hostingTier || undefined,
   });
 
   await fetch('https://api.resend.com/emails', {
@@ -136,17 +145,19 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
     admin_note?: string;
     proposal_text?: string;
     price_tier?: string;
+    hosting_tier?: string | null;
   };
 
-  // Save proposal text / tier independently (no status change required)
-  if (body.proposal_text !== undefined || body.price_tier !== undefined) {
+  // Save proposal text / tier / hosting independently (no status change required)
+  if (body.proposal_text !== undefined || body.price_tier !== undefined || body.hosting_tier !== undefined) {
     await db.prepare(
       `UPDATE quotes SET
         proposal_text = COALESCE(?, proposal_text),
         price_tier = COALESCE(?, price_tier),
+        hosting_tier = ?,
         updated_at = datetime('now')
        WHERE id = ?`
-    ).bind(body.proposal_text ?? null, body.price_tier ?? null, body.id).run();
+    ).bind(body.proposal_text ?? null, body.price_tier ?? null, body.hosting_tier ?? null, body.id).run();
   }
 
   // Update status + admin note if provided
@@ -159,8 +170,8 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
     const resendApiKey = env.RESEND_API_KEY;
     if (resendApiKey && ['proposal_sent', 'accepted', 'launched'].includes(body.status)) {
       const quote = await db.prepare(
-        `SELECT name, email, proposal_text, price_tier FROM quotes WHERE id = ?`
-      ).bind(body.id).first() as { name: string; email: string; proposal_text?: string; price_tier?: string } | null;
+        `SELECT name, email, proposal_text, price_tier, hosting_tier FROM quotes WHERE id = ?`
+      ).bind(body.id).first() as { name: string; email: string; proposal_text?: string; price_tier?: string; hosting_tier?: string } | null;
 
       if (quote?.email) {
         await sendStatusEmail({
@@ -171,6 +182,7 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
           adminNote: body.admin_note || undefined,
           proposalText: quote.proposal_text || undefined,
           priceTier: quote.price_tier || undefined,
+          hostingTier: quote.hosting_tier || undefined,
         });
       }
     }
