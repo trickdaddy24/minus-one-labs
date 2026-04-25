@@ -8,6 +8,12 @@ import Testimonials from '../components/Testimonials.astro';
 import Pricing from '../components/Pricing.astro';
 import Process from '../components/Process.astro';
 import ContactForm from '../components/ContactForm.astro';
+
+const db = (Astro.locals as any).runtime?.env?.DB;
+const regSetting = db
+  ? await db.prepare(`SELECT value FROM site_settings WHERE key = 'registration_open'`).first() as { value: string } | null
+  : null;
+const registrationOpen = !regSetting || regSetting.value !== '0';
 ---
 
 <Layout>
@@ -18,5 +24,5 @@ import ContactForm from '../components/ContactForm.astro';
   <Testimonials />
   <Pricing />
   <Process />
-  <ContactForm />
+  <ContactForm registrationOpen={registrationOpen} />
 </Layout>

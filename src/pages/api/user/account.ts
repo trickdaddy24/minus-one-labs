@@ -41,9 +41,9 @@ export const PATCH: APIRoute = async ({ request, locals }) => {
     return new Response(JSON.stringify({ error: 'Nothing to update' }), { status: 400 });
   }
 
-  binds.push(session.user_id);
+  binds.push(session.email);
   await db.prepare(
-    `UPDATE users SET ${updates.join(', ')} WHERE id = ?`
+    `UPDATE users SET ${updates.join(', ')} WHERE email = ?`
   ).bind(...binds).run();
 
   return new Response(JSON.stringify({ success: true }), { status: 200 });

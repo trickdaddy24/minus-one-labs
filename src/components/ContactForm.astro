@@ -1,4 +1,6 @@
 ---
+interface Props { registrationOpen?: boolean; }
+const { registrationOpen = true } = Astro.props;
 ---
 
 <section id="contact" class="py-24 bg-[#0a2540]">
@@ -11,7 +13,18 @@
       demo concept for your site.
     </p>
 
-    <form id="leadForm" class="space-y-6">
+    {!registrationOpen && (
+      <div class="text-center py-12 px-8 bg-[#0f1f35] border border-white/10 rounded-3xl">
+        <div class="text-4xl mb-4">🚧</div>
+        <h3 class="text-xl font-semibold text-white mb-2">We're not taking new inquiries right now</h3>
+        <p class="text-zinc-400 text-sm">
+          Our calendar is currently full. Check back soon — we open new spots periodically.<br />
+          In the meantime, feel free to <a href="mailto:support@minus-one-labs.com" class="text-[#635bff] hover:underline">send us an email</a>.
+        </p>
+      </div>
+    )}
+
+    <form id="leadForm" class={`space-y-6 ${!registrationOpen ? 'hidden' : ''}`}>
       <div class="grid md:grid-cols-2 gap-6">
         <input
           type="text"
@@ -144,33 +157,39 @@
     });
   });
 
-  const form = document.getElementById('leadForm') as HTMLFormElement;
-  const submitBtn = document.getElementById('submitBtn') as HTMLButtonElement;
-  const successMsg = document.getElementById('successMsg')!;
-  const errorMsg = document.getElementById('errorMsg')!;
+  const form = document.getElementById('leadForm') as HTMLFormElement | null;
+  const submitBtn = document.getElementById('submitBtn') as HTMLButtonElement | null;
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Sending...';
-    successMsg.classList.add('hidden');
-    errorMsg.classList.add('hidden');
+  if (form && submitBtn) {
+    const successMsg = document.getElementById('successMsg')!;
+    const errorMsg = document.getElementById('errorMsg')!;
 
-    const data = new FormData(form);
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+      successMsg.classList.add('hidden');
+      errorMsg.classList.add('hidden');
 
-    try {
-      const res = await fetch('/api/contact', { method: 'POST', body: data });
-      if (res.ok) {
-        successMsg.classList.remove('hidden');
-        form.reset();
-      } else {
+      const data = new FormData(form);
+
+      try {
+        const res = await fetch('/api/contact', { method: 'POST', body: data });
+        if (res.ok) {
+          successMsg.classList.remove('hidden');
+          form.reset();
+        } else {
+          const json = await res.json().catch(() => ({})) as { error?: string };
+          errorMsg.textContent = json.error ?? 'Something went wrong. Please email us directly.';
+          errorMsg.classList.remove('hidden');
+        }
+      } catch {
+        errorMsg.textContent = 'Something went wrong. Please email us directly.';
         errorMsg.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Inquiry — Let's Build";
       }
-    } catch {
-      errorMsg.classList.remove('hidden');
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Submit Inquiry — Let's Build";
-    }
-  });
+    });
+  }
 </script>
