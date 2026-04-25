@@ -11,30 +11,36 @@ const [{ results: blockedIps }, { results: recentAttempts }, { results: visitorL
 ]);
 
 const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.value]));
+const isLight = (settingsMap['default_display_mode'] ?? 'dark') === 'light';
 ---
 
-<Layout title="Security — Minus One Labs Admin">
-  <div class="min-h-screen bg-[#060f1a] text-white">
+<Layout
+  title="Security — Minus One Labs Admin"
+  bodyClass="font-sans"
+  bodyStyle={isLight ? 'background-color:#f1f5f9;color:#1e293b' : 'background-color:#060f1a;color:#ffffff'}
+  dataTheme={isLight ? 'light' : 'dark'}
+>
+  <div class="min-h-screen" style={isLight ? 'background-color:#f1f5f9' : 'background-color:#060f1a'}>
 
     <!-- Nav -->
-    <div class="border-b border-white/10 px-8 py-4 flex items-center justify-between">
+    <div class="border-b border-[var(--border)] px-8 py-4 flex items-center justify-between">
       <div class="flex items-center gap-4">
-        <a href="/admin" class="text-zinc-400 hover:text-white text-sm transition">← Dashboard</a>
-        <span class="font-heading font-semibold">Security & Settings <span class="text-zinc-600 font-normal text-xs ml-1">v2.0.0</span></span>
+        <a href="/admin" class="text-[var(--text-muted)] hover:text-[var(--text-head)] text-sm transition">← Dashboard</a>
+        <span class="font-heading font-semibold text-[var(--text-head)]">Security & Settings <span class="text-[var(--text-faint)] font-normal text-xs ml-1">v2.0.0</span></span>
       </div>
       <form method="POST" action="/api/auth/logout">
-        <button class="text-sm text-zinc-400 hover:text-white border border-white/20 px-4 py-2 rounded-xl transition">Sign out</button>
+        <button class="text-sm text-[var(--text-muted)] hover:text-[var(--text-head)] border border-[var(--border-mid)] px-4 py-2 rounded-xl transition">Sign out</button>
       </form>
     </div>
 
     <div class="max-w-6xl mx-auto px-8 py-10">
 
       <!-- Tabs -->
-      <div class="flex gap-2 mb-8 border-b border-white/10 pb-0">
+      <div class="flex gap-2 mb-8 border-b border-[var(--border)] pb-0">
         {['Settings', 'Promo Codes', 'Blocked IPs', 'Visitor Logs', 'Login Attempts'].map((tab, i) => (
           <button
             data-tab={i}
-            class={`tab-btn px-5 py-3 text-sm font-medium border-b-2 transition -mb-px ${i === 0 ? 'border-[#635bff] text-white' : 'border-transparent text-zinc-400 hover:text-white'}`}
+            class={`tab-btn px-5 py-3 text-sm font-medium border-b-2 transition -mb-px ${i === 0 ? 'border-[#635bff] text-[var(--text-head)]' : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-head)]'}`}
           >{tab}</button>
         ))}
       </div>
@@ -46,23 +52,23 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
           { key: 'rate_limit_window_minutes', label: 'Rate limit window (minutes)' },
           { key: 'inactivity_timeout_minutes', label: 'Inactivity timeout (minutes)' },
         ].map(s => (
-          <div class="flex items-center gap-4 bg-[#0f1f35] border border-white/10 rounded-xl px-6 py-4">
-            <label class="flex-1 text-sm text-zinc-300">{s.label}</label>
+          <div class="flex items-center gap-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-6 py-4">
+            <label class="flex-1 text-sm text-[var(--text-body)]">{s.label}</label>
             <input
               type="number"
               data-key={s.key}
               value={settingsMap[s.key] ?? ''}
-              class="setting-input bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-lg px-3 py-2 text-sm outline-none text-white text-center w-24"
+              class="setting-input bg-[var(--bg-input)] border border-[var(--border)] focus:border-[#635bff] rounded-lg px-3 py-2 text-sm outline-none text-[var(--text-body)] text-center w-24"
             />
-            <button data-key={s.key} class="save-setting text-xs bg-[#635bff] hover:bg-[#7e6bfd] px-4 py-2 rounded-lg transition">Save</button>
+            <button data-key={s.key} class="save-setting text-xs bg-[#635bff] hover:bg-[#7e6bfd] px-4 py-2 rounded-lg transition text-white">Save</button>
           </div>
         ))}
 
         <!-- Registration open toggle -->
-        <div class="flex items-center gap-4 bg-[#0f1f35] border border-white/10 rounded-xl px-6 py-4">
+        <div class="flex items-center gap-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-6 py-4">
           <div class="flex-1">
-            <p class="text-sm text-zinc-300">Registration open</p>
-            <p class="text-xs text-zinc-500 mt-0.5">Allow new clients to submit inquiry forms</p>
+            <p class="text-sm text-[var(--text-body)]">Registration open</p>
+            <p class="text-xs text-[var(--text-faint)] mt-0.5">Allow new clients to submit inquiry forms</p>
           </div>
           <button
             id="toggle-registration"
@@ -73,25 +79,25 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
             <span id="reg-track" class={`absolute inset-0 rounded-full transition-colors ${(settingsMap['registration_open'] ?? '1') === '1' ? 'bg-[#635bff]' : 'bg-zinc-700'}`}></span>
             <span id="reg-thumb" class={`relative inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${(settingsMap['registration_open'] ?? '1') === '1' ? 'translate-x-6' : 'translate-x-1'}`}></span>
           </button>
-          <span id="reg-label" class={`text-xs font-medium w-6 ${(settingsMap['registration_open'] ?? '1') === '1' ? 'text-green-300' : 'text-zinc-500'}`}>
+          <span id="reg-label" class={`text-xs font-medium w-6 ${(settingsMap['registration_open'] ?? '1') === '1' ? 'text-green-400' : 'text-[var(--text-faint)]'}`}>
             {(settingsMap['registration_open'] ?? '1') === '1' ? 'On' : 'Off'}
           </span>
         </div>
 
         <!-- Default display mode toggle -->
-        <div class="flex items-center gap-4 bg-[#0f1f35] border border-white/10 rounded-xl px-6 py-4">
+        <div class="flex items-center gap-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-6 py-4">
           <div class="flex-1">
-            <p class="text-sm text-zinc-300">Default display mode for clients</p>
-            <p class="text-xs text-zinc-500 mt-0.5">Applied when a client hasn't set their own preference</p>
+            <p class="text-sm text-[var(--text-body)]">Default display mode for clients</p>
+            <p class="text-xs text-[var(--text-faint)] mt-0.5">Applied when a client hasn't set their own preference</p>
           </div>
-          <div class="flex bg-[#060f1a] border border-white/10 rounded-lg p-0.5 gap-0.5">
+          <div class="flex bg-[var(--bg-inner)] border border-[var(--border)] rounded-lg p-0.5 gap-0.5">
             <button
               data-mode="dark"
-              class={`mode-btn px-4 py-1.5 rounded-md text-xs font-medium transition ${(settingsMap['default_display_mode'] ?? 'dark') === 'dark' ? 'bg-[#635bff] text-white' : 'text-zinc-400 hover:text-white'}`}
+              class={`mode-btn px-4 py-1.5 rounded-md text-xs font-medium transition ${(settingsMap['default_display_mode'] ?? 'dark') === 'dark' ? 'bg-[#635bff] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-head)]'}`}
             >Dark</button>
             <button
               data-mode="light"
-              class={`mode-btn px-4 py-1.5 rounded-md text-xs font-medium transition ${(settingsMap['default_display_mode'] ?? 'dark') === 'light' ? 'bg-[#635bff] text-white' : 'text-zinc-400 hover:text-white'}`}
+              class={`mode-btn px-4 py-1.5 rounded-md text-xs font-medium transition ${(settingsMap['default_display_mode'] ?? 'dark') === 'light' ? 'bg-[#635bff] text-white' : 'text-[var(--text-muted)] hover:text-[var(--text-head)]'}`}
             >Light</button>
           </div>
         </div>
@@ -99,26 +105,26 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
 
       <!-- Promo Codes tab -->
       <div id="tab-1" class="tab-panel hidden">
-        <div class="bg-[#0f1f35] border border-white/10 rounded-2xl p-6 mb-6">
-          <h3 class="font-semibold mb-4">Create Promo Code</h3>
+        <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 mb-6">
+          <h3 class="font-semibold mb-4 text-[var(--text-head)]">Create Promo Code</h3>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <input id="promoCode" placeholder="CODE" class="bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white uppercase" />
-            <input id="promoPct" type="number" placeholder="Discount %" min="1" max="100" class="bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white" />
-            <input id="promoMax" type="number" placeholder="Max uses (blank = unlimited)" class="bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white" />
-            <input id="promoExpiry" type="date" class="bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white" />
+            <input id="promoCode" placeholder="CODE" class="bg-[var(--bg-input)] border border-[var(--border)] focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-[var(--text-body)] uppercase" />
+            <input id="promoPct" type="number" placeholder="Discount %" min="1" max="100" class="bg-[var(--bg-input)] border border-[var(--border)] focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-[var(--text-body)]" />
+            <input id="promoMax" type="number" placeholder="Max uses (blank = unlimited)" class="bg-[var(--bg-input)] border border-[var(--border)] focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-[var(--text-body)]" />
+            <input id="promoExpiry" type="date" class="bg-[var(--bg-input)] border border-[var(--border)] focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-[var(--text-body)]" />
           </div>
-          <button id="createPromo" class="mt-3 bg-[#635bff] hover:bg-[#7e6bfd] px-5 py-2.5 rounded-xl text-sm font-semibold transition">Create Code</button>
+          <button id="createPromo" class="mt-3 bg-[#635bff] hover:bg-[#7e6bfd] px-5 py-2.5 rounded-xl text-sm font-semibold transition text-white">Create Code</button>
         </div>
 
         <div class="space-y-3" id="promoList">
           {(promos as any[]).map(p => (
-            <div class="flex items-center gap-4 bg-[#0f1f35] border border-white/10 rounded-xl px-5 py-4" data-promo-id={p.id}>
+            <div class="flex items-center gap-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-5 py-4" data-promo-id={p.id}>
               <span class="font-mono font-bold text-[#635bff] text-sm w-28">{p.code}</span>
-              <span class="text-sm text-zinc-300 flex-1">{p.discount_pct}% off · {p.uses} uses{p.max_uses ? ` / ${p.max_uses}` : ''}{p.expires_at ? ` · expires ${p.expires_at.slice(0,10)}` : ''}</span>
+              <span class="text-sm text-[var(--text-body)] flex-1">{p.discount_pct}% off · {p.uses} uses{p.max_uses ? ` / ${p.max_uses}` : ''}{p.expires_at ? ` · expires ${p.expires_at.slice(0,10)}` : ''}</span>
               <span class={`text-xs px-2 py-1 rounded-full ${p.active ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
                 {p.active ? 'Active' : 'Inactive'}
               </span>
-              <button data-id={p.id} data-active={p.active} class="toggle-promo text-xs border border-white/20 hover:border-white/40 px-3 py-1.5 rounded-lg transition">
+              <button data-id={p.id} data-active={p.active} class="toggle-promo text-xs border border-[var(--border-mid)] hover:border-[var(--border-mid)] text-[var(--text-muted)] px-3 py-1.5 rounded-lg transition">
                 {p.active ? 'Disable' : 'Enable'}
               </button>
               <button data-id={p.id} class="delete-promo text-xs text-red-400 hover:text-red-300 border border-red-400/30 hover:border-red-400/60 px-3 py-1.5 rounded-lg transition">Del</button>
@@ -130,18 +136,18 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
       <!-- Blocked IPs tab -->
       <div id="tab-2" class="tab-panel hidden">
         <div class="flex gap-3 mb-6">
-          <input id="blockIpInput" placeholder="IP address to block" class="flex-1 bg-[#0f1f35] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white" />
-          <input id="blockIpReason" placeholder="Reason (optional)" class="flex-1 bg-[#0f1f35] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white" />
-          <button id="blockIpBtn" class="bg-red-500 hover:bg-red-600 px-5 py-3 rounded-xl text-sm font-semibold transition">Block IP</button>
+          <input id="blockIpInput" placeholder="IP address to block" class="flex-1 bg-[var(--bg-card)] border border-[var(--border)] focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-[var(--text-body)]" />
+          <input id="blockIpReason" placeholder="Reason (optional)" class="flex-1 bg-[var(--bg-card)] border border-[var(--border)] focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-[var(--text-body)]" />
+          <button id="blockIpBtn" class="bg-red-500 hover:bg-red-600 px-5 py-3 rounded-xl text-sm font-semibold transition text-white">Block IP</button>
         </div>
         <div class="space-y-3" id="blockedList">
           {(blockedIps as any[]).length === 0 ? (
-            <p class="text-zinc-500 text-sm">No blocked IPs.</p>
+            <p class="text-[var(--text-muted)] text-sm">No blocked IPs.</p>
           ) : (blockedIps as any[]).map(b => (
-            <div class="flex items-center gap-4 bg-[#0f1f35] border border-white/10 rounded-xl px-5 py-3" data-ip={b.ip}>
-              <span class="font-mono text-sm text-red-300 w-36">{b.ip}</span>
-              <span class="text-zinc-400 text-xs flex-1">{b.reason ?? 'No reason'} · {b.blocked_at.slice(0,10)}</span>
-              <button data-ip={b.ip} class="unblock-btn text-xs border border-white/20 hover:border-green-400/50 hover:text-green-300 px-3 py-1.5 rounded-lg transition">Unblock</button>
+            <div class="flex items-center gap-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-5 py-3" data-ip={b.ip}>
+              <span class="font-mono text-sm text-red-400 w-36">{b.ip}</span>
+              <span class="text-[var(--text-muted)] text-xs flex-1">{b.reason ?? 'No reason'} · {b.blocked_at.slice(0,10)}</span>
+              <button data-ip={b.ip} class="unblock-btn text-xs border border-[var(--border-mid)] hover:border-green-400/50 hover:text-green-400 text-[var(--text-muted)] px-3 py-1.5 rounded-lg transition">Unblock</button>
             </div>
           ))}
         </div>
@@ -152,7 +158,7 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr class="text-zinc-500 text-xs border-b border-white/10">
+              <tr class="text-[var(--text-faint)] text-xs border-b border-[var(--border)]">
                 <th class="text-left py-3 pr-4">Email</th>
                 <th class="text-left py-3 pr-4">IP</th>
                 <th class="text-left py-3 pr-4">Location</th>
@@ -160,14 +166,14 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
                 <th class="text-left py-3">Time</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-white/5">
+            <tbody class="divide-y divide-[var(--border)]">
               {(visitorLogs as any[]).map(v => (
-                <tr class="hover:bg-white/5">
-                  <td class="py-2.5 pr-4 text-zinc-300">{v.email ?? '—'}</td>
-                  <td class="py-2.5 pr-4 font-mono text-xs text-zinc-400">{v.ip ?? '—'}</td>
-                  <td class="py-2.5 pr-4 text-zinc-400 text-xs">{[v.city, v.country].filter(Boolean).join(', ') || '—'}</td>
-                  <td class="py-2.5 pr-4 text-zinc-400 text-xs">{v.page}</td>
-                  <td class="py-2.5 text-zinc-500 text-xs">{v.created_at.slice(0,16).replace('T',' ')}</td>
+                <tr class="hover:bg-[var(--hover-row)]">
+                  <td class="py-2.5 pr-4 text-[var(--text-body)]">{v.email ?? '—'}</td>
+                  <td class="py-2.5 pr-4 font-mono text-xs text-[var(--text-muted)]">{v.ip ?? '—'}</td>
+                  <td class="py-2.5 pr-4 text-[var(--text-muted)] text-xs">{[v.city, v.country].filter(Boolean).join(', ') || '—'}</td>
+                  <td class="py-2.5 pr-4 text-[var(--text-muted)] text-xs">{v.page}</td>
+                  <td class="py-2.5 text-[var(--text-faint)] text-xs">{v.created_at.slice(0,16).replace('T',' ')}</td>
                 </tr>
               ))}
             </tbody>
@@ -180,24 +186,24 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
-              <tr class="text-zinc-500 text-xs border-b border-white/10">
+              <tr class="text-[var(--text-faint)] text-xs border-b border-[var(--border)]">
                 <th class="text-left py-3 pr-4">IP</th>
                 <th class="text-left py-3 pr-4">Email</th>
                 <th class="text-left py-3 pr-4">Result</th>
                 <th class="text-left py-3">Time</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-white/5">
+            <tbody class="divide-y divide-[var(--border)]">
               {(recentAttempts as any[]).map(a => (
-                <tr class="hover:bg-white/5">
-                  <td class="py-2.5 pr-4 font-mono text-xs text-zinc-400">{a.ip}</td>
-                  <td class="py-2.5 pr-4 text-zinc-300 text-xs">{a.email ?? '—'}</td>
+                <tr class="hover:bg-[var(--hover-row)]">
+                  <td class="py-2.5 pr-4 font-mono text-xs text-[var(--text-muted)]">{a.ip}</td>
+                  <td class="py-2.5 pr-4 text-[var(--text-body)] text-xs">{a.email ?? '—'}</td>
                   <td class="py-2.5 pr-4">
                     <span class={`text-xs px-2 py-0.5 rounded-full ${a.success ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
                       {a.success ? 'Success' : 'Failed'}
                     </span>
                   </td>
-                  <td class="py-2.5 text-zinc-500 text-xs">{a.created_at.slice(0,16).replace('T',' ')}</td>
+                  <td class="py-2.5 text-[var(--text-faint)] text-xs">{a.created_at.slice(0,16).replace('T',' ')}</td>
                 </tr>
               ))}
             </tbody>
@@ -216,12 +222,12 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
       const i = btn.getAttribute('data-tab');
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
       document.querySelectorAll('.tab-btn').forEach(b => {
-        b.classList.remove('border-[#635bff]', 'text-white');
-        b.classList.add('border-transparent', 'text-zinc-400');
+        b.classList.remove('border-[#635bff]');
+        b.classList.add('border-transparent');
       });
       document.getElementById(`tab-${i}`)!.classList.remove('hidden');
-      btn.classList.add('border-[#635bff]', 'text-white');
-      btn.classList.remove('border-transparent', 'text-zinc-400');
+      btn.classList.add('border-[#635bff]');
+      btn.classList.remove('border-transparent');
     });
   });
 
@@ -289,7 +295,7 @@ const settingsMap = Object.fromEntries((settings as any[]).map(s => [s.key, s.va
     track.className = `absolute inset-0 rounded-full transition-colors ${next === '1' ? 'bg-[#635bff]' : 'bg-zinc-700'}`;
     thumb.className = `relative inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${next === '1' ? 'translate-x-6' : 'translate-x-1'}`;
     label.textContent = next === '1' ? 'On' : 'Off';
-    label.className = `text-xs font-medium w-6 ${next === '1' ? 'text-green-300' : 'text-zinc-500'}`;
+    label.className = `text-xs font-medium w-6 ${next === '1' ? 'text-green-400' : 'text-zinc-500'}`;
     await fetch('/api/admin/security', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'update_setting', key: 'registration_open', value: next }),

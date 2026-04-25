@@ -5,7 +5,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const env = (locals as any).runtime?.env ?? {};
   const session = (locals as any).session;
 
-  if (!session || !['user', 'customer'].includes(session.role)) {
+  if (!session || session.role === 'admin') {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
   }
 

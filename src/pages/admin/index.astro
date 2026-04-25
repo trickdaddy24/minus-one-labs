@@ -23,7 +23,13 @@ const counts = {
   launched: quotes.filter((q: any) => q.status === 'launched').length,
 };
 
-const statusColor: Record<string, string> = {
+const statusColor: Record<string, string> = isLight ? {
+  pending: 'bg-yellow-100 text-yellow-700 border-yellow-300',
+  proposal_sent: 'bg-blue-100 text-blue-700 border-blue-300',
+  proposal_rejected: 'bg-red-100 text-red-700 border-red-300',
+  accepted: 'bg-green-100 text-green-700 border-green-300',
+  launched: 'bg-purple-100 text-purple-700 border-purple-300',
+} : {
   pending: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
   proposal_sent: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
   proposal_rejected: 'bg-red-500/20 text-red-300 border-red-500/30',
@@ -34,30 +40,31 @@ const statusColor: Record<string, string> = {
 
 <Layout
   title="Admin Dashboard — Minus One Labs"
-  bodyClass={isLight ? 'bg-slate-100 text-slate-900' : 'bg-[#060f1a] text-white'}
+  bodyClass="font-sans"
   bodyStyle={isLight ? 'background-color:#f1f5f9;color:#1e293b' : 'background-color:#060f1a;color:#ffffff'}
+  dataTheme={isLight ? 'light' : 'dark'}
 >
-  <div class={isLight ? 'min-h-screen' : 'min-h-screen'} style={isLight ? 'background-color:#f1f5f9' : 'background-color:#060f1a'}>
+  <div class="min-h-screen" style={isLight ? 'background-color:#f1f5f9' : 'background-color:#060f1a'}>
 
     <!-- Confirm modal -->
     <div id="confirmModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4">
-      <div class="bg-[#0f1f35] border border-white/20 rounded-2xl p-6 max-w-sm w-full">
-        <h3 class="font-semibold text-lg mb-2">Confirm Status Change</h3>
-        <p id="confirmText" class="text-zinc-400 text-sm mb-6"></p>
+      <div class="bg-[var(--bg-card)] border border-[var(--border-mid)] rounded-2xl p-6 max-w-sm w-full">
+        <h3 class="font-semibold text-lg mb-2 text-[var(--text-head)]">Confirm Status Change</h3>
+        <p id="confirmText" class="text-[var(--text-muted)] text-sm mb-6"></p>
         <div class="flex gap-3">
-          <button id="confirmYes" class="flex-1 bg-[#635bff] hover:bg-[#7e6bfd] py-2.5 rounded-xl text-sm font-semibold transition">Yes, send it</button>
-          <button id="confirmNo" class="flex-1 border border-white/20 hover:border-white/40 py-2.5 rounded-xl text-sm transition">Cancel</button>
+          <button id="confirmYes" class="flex-1 bg-[#635bff] hover:bg-[#7e6bfd] py-2.5 rounded-xl text-sm font-semibold transition text-white">Yes, send it</button>
+          <button id="confirmNo" class="flex-1 border border-[var(--border-mid)] hover:border-[var(--border-mid)] py-2.5 rounded-xl text-sm transition text-[var(--text-body)]">Cancel</button>
         </div>
       </div>
     </div>
 
     <!-- Top nav -->
-    <div class="border-b border-white/10 px-8 py-4 flex items-center justify-between">
-      <span class="font-heading font-semibold text-lg">Minus One Labs <span class="text-zinc-500 font-normal text-sm ml-2">Admin</span> <span class="text-zinc-600 font-normal text-xs ml-1">v2.0.0</span></span>
+    <div class="border-b border-[var(--border)] px-8 py-4 flex items-center justify-between">
+      <span class="font-heading font-semibold text-lg text-[var(--text-head)]">Minus One Labs <span class="text-[var(--text-faint)] font-normal text-sm ml-2">Admin</span> <span class="text-[var(--text-faint)] font-normal text-xs ml-1">v2.0.0</span></span>
       <div class="flex items-center gap-3">
-        <a href="/admin/security" class="text-sm text-zinc-400 hover:text-white border border-white/20 px-4 py-2 rounded-xl transition">Security</a>
+        <a href="/admin/security" class="text-sm text-[var(--text-muted)] hover:text-[var(--text-head)] border border-[var(--border-mid)] px-4 py-2 rounded-xl transition">Security</a>
         <form method="POST" action="/api/auth/logout">
-          <button class="text-sm text-zinc-400 hover:text-white border border-white/20 px-4 py-2 rounded-xl transition">Sign out</button>
+          <button class="text-sm text-[var(--text-muted)] hover:text-[var(--text-head)] border border-[var(--border-mid)] px-4 py-2 rounded-xl transition">Sign out</button>
         </form>
       </div>
     </div>
@@ -67,63 +74,63 @@ const statusColor: Record<string, string> = {
       <!-- Stats -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         {[
-          { label: 'Total Inquiries', value: counts.total, color: 'text-white' },
-          { label: 'Pending', value: counts.pending, color: 'text-yellow-300' },
-          { label: 'Accepted', value: counts.accepted, color: 'text-green-300' },
-          { label: 'Launched', value: counts.launched, color: 'text-purple-300' },
+          { label: 'Total Inquiries', value: counts.total, color: 'text-[var(--text-head)]' },
+          { label: 'Pending', value: counts.pending, color: 'text-yellow-400' },
+          { label: 'Accepted', value: counts.accepted, color: 'text-green-400' },
+          { label: 'Launched', value: counts.launched, color: 'text-purple-400' },
         ].map(stat => (
-          <div class="bg-[#0f1f35] border border-white/10 rounded-2xl p-5">
+          <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
             <div class={`text-3xl font-bold ${stat.color}`}>{stat.value}</div>
-            <div class="text-zinc-400 text-sm mt-1">{stat.label}</div>
+            <div class="text-[var(--text-muted)] text-sm mt-1">{stat.label}</div>
           </div>
         ))}
       </div>
 
       <!-- Quotes table -->
-      <h2 class="text-xl font-semibold mb-4">All Inquiries</h2>
+      <h2 class="text-xl font-semibold mb-4 text-[var(--text-head)]">All Inquiries</h2>
 
       {quotes.length === 0 ? (
-        <div class="bg-[#0f1f35] rounded-2xl p-10 text-center text-zinc-400">No inquiries yet.</div>
+        <div class="bg-[var(--bg-card)] rounded-2xl p-10 text-center text-[var(--text-muted)]">No inquiries yet.</div>
       ) : (
         <div class="space-y-4">
           {quotes.map((q: any) => (
-            <div class="bg-[#0f1f35] border border-white/10 rounded-2xl p-6" data-id={q.id}>
+            <div class="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6" data-id={q.id}>
               <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
                 <div>
-                  <div class="font-semibold text-lg">{q.company || q.name}</div>
-                  <div class="text-zinc-400 text-sm">{q.email} · {new Date(q.created_at).toLocaleDateString()}</div>
-                  {q.needs && <div class="text-zinc-500 text-xs mt-1">Needs: {q.needs}</div>}
+                  <div class="font-semibold text-lg text-[var(--text-head)]">{q.company || q.name}</div>
+                  <div class="text-[var(--text-muted)] text-sm">{q.email} · {new Date(q.created_at).toLocaleDateString()}</div>
+                  {q.needs && <div class="text-[var(--text-faint)] text-xs mt-1">Needs: {q.needs}</div>}
                 </div>
-                <span class={`text-xs font-medium px-3 py-1 rounded-full border status-badge ${statusColor[q.status] ?? 'bg-white/10 text-white'}`}>
+                <span class={`text-xs font-medium px-3 py-1 rounded-full border status-badge ${statusColor[q.status] ?? 'bg-[var(--bg-inner)] text-[var(--text-muted)] border-[var(--border)]'}`}>
                   {q.status.replace('_', ' ')}
                 </span>
               </div>
 
-              <p class="text-zinc-300 text-sm mb-4 leading-relaxed">{q.message}</p>
+              <p class="text-[var(--text-body)] text-sm mb-4 leading-relaxed">{q.message}</p>
 
               {/* Questionnaire answers */}
               {q.q_submitted && (
-                <div class="bg-[#060f1a] rounded-xl p-4 mb-4 text-sm space-y-2">
-                  <div class="text-zinc-400 font-medium text-xs uppercase tracking-wider mb-3">Questionnaire</div>
-                  {q.has_photos && <div><span class="text-zinc-500">Photos:</span> {q.has_photos}</div>}
-                  {q.company_history && <div><span class="text-zinc-500">About:</span> {q.company_history}</div>}
-                  {q.contact_methods && <div><span class="text-zinc-500">Contact via:</span> {q.contact_methods}</div>}
-                  {q.preferred_domain && <div><span class="text-zinc-500">Domain:</span> {q.preferred_domain}</div>}
-                  {q.other_requests && <div><span class="text-zinc-500">Other:</span> {q.other_requests}</div>}
+                <div class="bg-[var(--bg-inner)] rounded-xl p-4 mb-4 text-sm space-y-2 text-[var(--text-body)]">
+                  <div class="text-[var(--text-muted)] font-medium text-xs uppercase tracking-wider mb-3">Questionnaire</div>
+                  {q.has_photos && <div><span class="text-[var(--text-faint)]">Photos:</span> {q.has_photos}</div>}
+                  {q.company_history && <div><span class="text-[var(--text-faint)]">About:</span> {q.company_history}</div>}
+                  {q.contact_methods && <div><span class="text-[var(--text-faint)]">Contact via:</span> {q.contact_methods}</div>}
+                  {q.preferred_domain && <div><span class="text-[var(--text-faint)]">Domain:</span> {q.preferred_domain}</div>}
+                  {q.other_requests && <div><span class="text-[var(--text-faint)]">Other:</span> {q.other_requests}</div>}
                 </div>
               )}
 
               {/* Proposal */}
               <div class="mb-4">
-                <label class="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Proposal (visible to client in dashboard)</label>
+                <label class="text-xs text-[var(--text-faint)] uppercase tracking-wider block mb-1.5">Proposal (visible to client in dashboard)</label>
                 <textarea
-                  class="proposal-input w-full bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white placeholder-zinc-600 resize-none"
+                  class="proposal-input w-full bg-[var(--bg-input)] border border-[var(--border)] focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-[var(--text-body)] placeholder-[var(--text-faint)] resize-none"
                   rows="4"
                   placeholder="Scope of work, deliverables, timeline, pricing details..."
                 >{q.proposal_text ?? ''}</textarea>
                 <div class="flex flex-wrap items-center gap-3 mt-2">
                   <select
-                    class="tier-select bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-lg px-3 py-2 text-sm outline-none text-white"
+                    class="tier-select bg-[var(--bg-input)] border border-[var(--border)] focus:border-[#635bff] rounded-lg px-3 py-2 text-sm outline-none text-[var(--text-body)]"
                   >
                     <option value="" selected={!q.price_tier}>Build tier...</option>
                     <option value="basic" selected={q.price_tier === 'basic'}>Basic — $500</option>
@@ -131,14 +138,14 @@ const statusColor: Record<string, string> = {
                     <option value="premium" selected={q.price_tier === 'premium'}>Premium — $3,000</option>
                   </select>
                   <select
-                    class="hosting-tier-select bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-lg px-3 py-2 text-sm outline-none text-white"
+                    class="hosting-tier-select bg-[var(--bg-input)] border border-[var(--border)] focus:border-[#635bff] rounded-lg px-3 py-2 text-sm outline-none text-[var(--text-body)]"
                   >
                     <option value="" selected={!q.hosting_tier}>No hosting add-on</option>
                     <option value="starter" selected={q.hosting_tier === 'starter'}>Starter — $6/mo ($72/yr)</option>
                     <option value="growth" selected={q.hosting_tier === 'growth'}>Growth — $12/mo ($144/yr)</option>
                     <option value="pro" selected={q.hosting_tier === 'pro'}>Pro — $24/mo ($288/yr)</option>
                   </select>
-                  <button class="save-proposal-btn text-xs bg-[#1a3a66] hover:bg-[#1e4070] border border-white/20 px-4 py-2 rounded-lg transition">Save Proposal</button>
+                  <button class="save-proposal-btn text-xs bg-[#635bff] hover:bg-[#7e6bfd] border border-transparent px-4 py-2 rounded-lg transition text-white">Save Proposal</button>
                   {q.proposal_text && <span class="text-xs text-green-400">✓ Proposal saved</span>}
                 </div>
               </div>
@@ -147,7 +154,7 @@ const statusColor: Record<string, string> = {
               <div class="flex flex-wrap gap-3 items-end">
                 <div class="flex-1 min-w-48">
                   <textarea
-                    class="note-input w-full bg-[#060f1a] border border-white/10 focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-white placeholder-zinc-500 resize-none"
+                    class="note-input w-full bg-[var(--bg-input)] border border-[var(--border)] focus:border-[#635bff] rounded-xl px-4 py-3 text-sm outline-none text-[var(--text-body)] placeholder-[var(--text-faint)] resize-none"
                     rows="2"
                     placeholder="Note to client (optional — included in status email)"
                   >{q.admin_note ?? ''}</textarea>
@@ -163,14 +170,14 @@ const statusColor: Record<string, string> = {
                   {['pending','proposal_sent','proposal_rejected','accepted','launched'].map(s => (
                     <button
                       data-status={s}
-                      class={`status-btn text-xs px-3 py-2 rounded-xl border transition ${q.status === s ? 'bg-[#635bff] border-[#635bff] text-white' : 'border-white/20 text-zinc-400 hover:border-white/40'}`}
+                      class={`status-btn text-xs px-3 py-2 rounded-xl border transition ${q.status === s ? 'bg-[#635bff] border-[#635bff] text-white' : 'border-[var(--border-mid)] text-[var(--text-muted)] hover:border-[var(--border-mid)]'}`}
                     >
                       {s.replace(/_/g,' ')}
                     </button>
                   ))}
                   <button
                     data-email={q.email}
-                    class="send-link-btn text-xs px-3 py-2 rounded-xl border border-white/20 text-zinc-400 hover:border-[#635bff] hover:text-[#635bff] transition"
+                    class="send-link-btn text-xs px-3 py-2 rounded-xl border border-[var(--border-mid)] text-[var(--text-muted)] hover:border-[#635bff] hover:text-[#635bff] transition"
                     title="Send new magic link to client"
                   >
                     🔗 Send Login Link

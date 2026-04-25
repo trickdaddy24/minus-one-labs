@@ -4,6 +4,7 @@ interface Props {
   description?: string;
   bodyClass?: string;
   bodyStyle?: string;
+  dataTheme?: string;
 }
 
 const {
@@ -11,6 +12,7 @@ const {
   description = 'Minus One Labs builds fast, beautiful, high-converting websites with integrated reviews and SEO.',
   bodyClass = 'bg-[#0a2540] text-white',
   bodyStyle = '',
+  dataTheme = 'dark',
 } = Astro.props;
 ---
 
@@ -42,8 +44,36 @@ const {
         reset();
       }
     </script>
+    <style>
+      [data-theme="dark"] {
+        --bg-page:    #060f1a;
+        --bg-card:    #0f1f35;
+        --bg-inner:   #060f1a;
+        --bg-input:   #060f1a;
+        --text-head:  #ffffff;
+        --text-body:  #cbd5e1;
+        --text-muted: #94a3b8;
+        --text-faint: #64748b;
+        --border:     rgba(255,255,255,0.10);
+        --border-mid: rgba(255,255,255,0.20);
+        --hover-row:  rgba(255,255,255,0.05);
+      }
+      [data-theme="light"] {
+        --bg-page:    #f1f5f9;
+        --bg-card:    #ffffff;
+        --bg-inner:   #f8fafc;
+        --bg-input:   #f8fafc;
+        --text-head:  #0f172a;
+        --text-body:  #334155;
+        --text-muted: #64748b;
+        --text-faint: #94a3b8;
+        --border:     rgba(0,0,0,0.10);
+        --border-mid: rgba(0,0,0,0.15);
+        --hover-row:  rgba(0,0,0,0.03);
+      }
+    </style>
   </head>
-  <body class={`${bodyClass} font-sans`} style={bodyStyle}>
+  <body class={`${bodyClass} font-sans`} style={bodyStyle} data-theme={dataTheme}>
     <slot />
   </body>
 </html>
