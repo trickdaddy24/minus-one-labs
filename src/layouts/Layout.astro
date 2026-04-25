@@ -2,11 +2,13 @@
 interface Props {
   title?: string;
   description?: string;
+  bodyClass?: string;
 }
 
 const {
   title = 'Minus One Labs • Modern Websites That Rank & Convert',
   description = 'Minus One Labs builds fast, beautiful, high-converting websites with integrated reviews and SEO.',
+  bodyClass = 'bg-[#0a2540] text-white',
 } = Astro.props;
 ---
 
@@ -39,7 +41,7 @@ const {
       }
     </script>
   </head>
-  <body class="bg-[#0a2540] text-white font-sans">
+  <body class={`${bodyClass} font-sans`}>
     <slot />
   </body>
 </html>
