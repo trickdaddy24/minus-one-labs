@@ -3,6 +3,11 @@ import Layout from '../../layouts/Layout.astro';
 const session = (Astro.locals as any).session;
 const db = (Astro.locals as any).runtime?.env?.DB;
 
+const siteSetting = await db.prepare(
+  `SELECT value FROM site_settings WHERE key = 'default_display_mode'`
+).first() as { value: string } | null;
+const isLight = (siteSetting?.value ?? 'dark') === 'light';
+
 const { results: quotes } = await db.prepare(
   `SELECT q.*, qn.has_photos, qn.company_history, qn.contact_methods, qn.preferred_domain, qn.other_requests, qn.submitted_at as q_submitted
    FROM quotes q
@@ -27,8 +32,12 @@ const statusColor: Record<string, string> = {
 };
 ---
 
-<Layout title="Admin Dashboard — Minus One Labs">
-  <div class="min-h-screen bg-[#060f1a] text-white">
+<Layout
+  title="Admin Dashboard — Minus One Labs"
+  bodyClass={isLight ? 'bg-slate-100 text-slate-900' : 'bg-[#060f1a] text-white'}
+  bodyStyle={isLight ? 'background-color:#f1f5f9;color:#1e293b' : 'background-color:#060f1a;color:#ffffff'}
+>
+  <div class={isLight ? 'min-h-screen' : 'min-h-screen'} style={isLight ? 'background-color:#f1f5f9' : 'background-color:#060f1a'}>
 
     <!-- Confirm modal -->
     <div id="confirmModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4">
