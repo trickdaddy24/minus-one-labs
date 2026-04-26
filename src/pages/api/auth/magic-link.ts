@@ -36,7 +36,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   await db.prepare(`INSERT INTO login_attempts (ip, email, success) VALUES (?, ?, 0)`).bind(ip, email).run();
   await db.prepare(
     `INSERT INTO magic_links (email, token, expires_at, requesting_ip) VALUES (?, ?, ?, ?)`
-  ).bind(email, token, expires, ip).run();
+  ).bind(email, token, expires, ip === 'unknown' ? null : ip).run();
 
   const link = `https://minus-one-labs.com/api/auth/verify?token=${token}`;
 

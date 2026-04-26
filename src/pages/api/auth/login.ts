@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { generateToken, expiresAt, sessionCookie, hashPassword } from '../../../lib/auth';
+import { generateToken, expiresAt, sessionCookie, hashPassword, verifyPassword, isLegacyHash } from '../../../lib/auth';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const db = (locals as any).runtime?.env?.DB;
@@ -15,13 +15,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     `SELECT id, email, role, password_hash FROM users WHERE email = ? AND password_hash IS NOT NULL`
   ).bind(email.toLowerCase().trim()).first() as { id: string; email: string; role: string; password_hash: string } | null;
 
-  if (!user) {
+  if (!user || !(await verifyPassword(password, user.password_hash))) {
     return new Response(JSON.stringify({ error: 'Invalid email or password' }), { status: 401 });
   }
 
-  const hash = await hashPassword(password);
-  if (hash !== user.password_hash) {
-    return new Response(JSON.stringify({ error: 'Invalid email or password' }), { status: 401 });
+  // Auto-upgrade legacy SHA-256 hash to PBKDF2
+  if (isLegacyHash(user.password_hash)) {
+    const newHash = await hashPassword(password);
+    await db.prepare(`UPDATE users SET password_hash = ? WHERE id = ?`)
+      .bind(newHash, user.id).run().catch(() => {});
   }
 
   // Create session

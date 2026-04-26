@@ -1,5 +1,9 @@
 import type { APIRoute } from 'astro';
 
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 export const POST: APIRoute = async ({ request, locals }) => {
   const data = await request.formData();
 
@@ -94,11 +98,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
   if (resendApiKey) {
     const htmlBody = `
       <h2>New Minus One Labs Inquiry</h2>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      ${company ? `<p><strong>Company:</strong> ${company}</p>` : ''}
-      ${needs ? `<p><strong>Needs:</strong> ${needs}</p>` : ''}
-      <p><strong>Message:</strong><br>${message.replace(/\n/g, '<br>')}</p>
+      <p><strong>Name:</strong> ${esc(name)}</p>
+      <p><strong>Email:</strong> ${esc(email)}</p>
+      ${company ? `<p><strong>Company:</strong> ${esc(company)}</p>` : ''}
+      ${needs ? `<p><strong>Needs:</strong> ${esc(needs)}</p>` : ''}
+      <p><strong>Message:</strong><br>${esc(message).replace(/\n/g, '<br>')}</p>
     `;
     sends.push(
       fetch('https://api.resend.com/emails', {

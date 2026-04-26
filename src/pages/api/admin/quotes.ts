@@ -2,6 +2,10 @@ import type { APIRoute } from 'astro';
 
 const SITE = 'https://minus-one-labs.com';
 
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 const TIER_LABELS: Record<string, string> = {
   basic: 'Basic — $500',
   standard: 'Standard — $1,500',
@@ -37,11 +41,11 @@ function buildEmailHtml(opts: {
         </td></tr>
         <tr><td style="padding:40px;">
           <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#fff;">${opts.heading}</h2>
-          <p style="margin:0 0 12px;color:#94a3b8;font-size:15px;line-height:1.6;">Hi ${opts.name},</p>
+          <p style="margin:0 0 12px;color:#94a3b8;font-size:15px;line-height:1.6;">Hi ${esc(opts.name)},</p>
           <p style="margin:0 0 24px;color:#cbd5e1;font-size:15px;line-height:1.6;">${opts.body}</p>
           ${opts.tier || opts.hostingTier ? `<div style="background:#635bff22;border:1px solid #635bff44;border-radius:10px;padding:12px 20px;margin-bottom:24px;">${opts.tier ? `<div style="color:#a5a0ff;font-size:13px;font-weight:600;margin-bottom:${opts.hostingTier ? '8px' : '0'};">Build Plan: ${TIER_LABELS[opts.tier] ?? opts.tier}</div>` : ''}${opts.hostingTier ? `<div style="color:#a5a0ff;font-size:13px;font-weight:600;">Hosting Add-on: ${HOSTING_LABELS[opts.hostingTier] ?? opts.hostingTier}</div>` : ''}</div>` : ''}
-          ${opts.proposal ? `<div style="background:#060f1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:20px;margin-bottom:24px;"><strong style="color:#e2e8f0;font-size:14px;display:block;margin-bottom:10px;">Your Proposal:</strong><div style="color:#94a3b8;font-size:14px;line-height:1.7;white-space:pre-wrap;">${opts.proposal}</div></div>` : ''}
-          ${opts.note ? `<div style="background:#060f1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:16px 20px;margin-bottom:24px;color:#94a3b8;font-size:14px;line-height:1.5;"><strong style="color:#e2e8f0;">Note from our team:</strong><br>${opts.note}</div>` : ''}
+          ${opts.proposal ? `<div style="background:#060f1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:20px;margin-bottom:24px;"><strong style="color:#e2e8f0;font-size:14px;display:block;margin-bottom:10px;">Your Proposal:</strong><div style="color:#94a3b8;font-size:14px;line-height:1.7;white-space:pre-wrap;">${esc(opts.proposal)}</div></div>` : ''}
+          ${opts.note ? `<div style="background:#060f1a;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:16px 20px;margin-bottom:24px;color:#94a3b8;font-size:14px;line-height:1.5;"><strong style="color:#e2e8f0;">Note from our team:</strong><br>${esc(opts.note)}</div>` : ''}
           ${opts.cta ? `<a href="${opts.cta.url}" style="display:inline-block;background:#635bff;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;">${opts.cta.label}</a>` : ''}
         </td></tr>
         <tr><td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.07);">

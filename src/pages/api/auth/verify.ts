@@ -19,8 +19,8 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
     return new Response(null, { status: 302, headers: { Location: '/login?error=expired' } });
   }
 
-  // IP restriction — must match requesting IP
-  if (link.requesting_ip && link.requesting_ip !== 'unknown' && link.requesting_ip !== clientIp) {
+  // IP restriction — reject if a known requesting IP doesn't match
+  if (link.requesting_ip !== null && link.requesting_ip !== clientIp) {
     return new Response(null, { status: 302, headers: { Location: '/login?error=ip_mismatch' } });
   }
 

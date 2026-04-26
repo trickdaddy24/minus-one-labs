@@ -4,6 +4,20 @@ All notable changes to Minus One Labs are documented here.
 
 ---
 
+## [2.1.0] — 2026-04-26
+
+### Security
+
+- **Password hashing** — replaced SHA-256 with PBKDF2 (100,000 iterations, random salt per hash) via Web Crypto API. No npm dependencies added. Existing passwords auto-upgrade to PBKDF2 on next successful login with no forced reset.
+- **Admin login rate limiting** — `/api/admin/login` now enforces 5 failed attempts per IP per 15 minutes (same as magic link flow). Failed attempts logged to `login_attempts` table.
+- **Timing-safe super admin compare** — `SUPER_ADMIN_USERNAME` / `SUPER_ADMIN_PASSWORD` env var comparison now uses constant-time string equality to prevent timing attacks.
+- **XSS fix — contact email** — all user-supplied fields (name, email, company, message) HTML-escaped before insertion into Resend email body.
+- **XSS fix — quote status emails** — proposal text and admin note HTML-escaped in `buildEmailHtml()`.
+- **Magic link IP fix** — requesting IP stored as `NULL` (not `'unknown'`) when CF-Connecting-IP is unavailable, eliminating the silent IP-restriction bypass on verify.
+- **Removed duplicate `hashPassword`** — `api/user/account.ts` was duplicating the SHA-256 hash function; now imports from `lib/auth`.
+
+---
+
 ## [2.0.0] — 2026-04-23
 
 ### Major Release — Platform Phase 2
